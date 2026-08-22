@@ -865,7 +865,8 @@ canvas {
 .pg-actions {
   display: flex;
   align-items: center;
-  gap: 1.1rem;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.1rem;
   margin-top: 1.1rem;
 }
 #pg-status {
@@ -1583,6 +1584,10 @@ html.js .reveal.is-visible {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
+  .footer-brand {
+    /* la marca con su descripcion ocupa la fila completa; columnas de enlaces abajo */
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1603,5 +1608,13 @@ html.js .reveal.is-visible {
   .legend li {
     grid-template-columns: 1fr;
     gap: 0.35rem;
+  }
+  /* la escena decorativa del hero solapa el titulo en pantallas muy pequenas */
+  .pulsar-scene {
+    display: none;
+  }
+  .compare th,
+  .compare td {
+    padding: 0.8rem 0.9rem;
   }
 }
