@@ -3,10 +3,10 @@
 [![CI](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml/badge.svg)](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Lib](https://img.shields.io/badge/pulsar--psr-v2.0.0-gold)](pyproject.toml)
+[![Lib](https://img.shields.io/badge/pulsar--psr-v2.0.1-gold)](pyproject.toml)
 
 > **Estado:** Draft estable  
-> **Librería:** `pulsar-psr` v2.0.0 — desde v2.0 la representación en memoria usa claves en inglés: `type`, `attributes`, `children` (el formato `.psr` no cambia).  
+> **Librería:** `pulsar-psr` v2.0.1 — desde v2.0 la representación en memoria usa claves en inglés: `type`, `attributes`, `children` (el formato `.psr` no cambia).  
 > **Propósito:** Formato de datos estructurados, legible por humanos, jerárquico y extensible, diseñado desde cero (no derivado de JSON/YAML/TOML).  
 > **Contribuciones:** leer [CONTRIBUTING](CONTRIBUTING.md).  
 > **Desarrollo:** Este formato se desarrollo por la idea de un tipo de archivo diferente a los demas y facil de leer, se creo con la ayuda del modelo/IA ChatGPT.
@@ -706,7 +706,7 @@ psr dump -f users.psr -o out.psr
 psr version
 ```
 
-* Muestra la versión actual: `PULSAR CLI v2.0.0`
+* Muestra la versión actual: `PULSAR CLI v2.0.1`
 
 ---
 
@@ -728,4 +728,4 @@ El CLI vive en `pulsar.py` y está construido con `argparse` y subcomandos:
 
 ---
 
-PULSAR 2.0.0
+PULSAR 2.0.1
