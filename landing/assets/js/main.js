@@ -201,6 +201,28 @@
     });
   }
 
+  /* ============ Estrellas de GitHub (API publica, con fallback) ============ */
+  const ghStars = $('[data-gh-stars]');
+  if (ghStars) {
+    const ghCount = ghStars.querySelector('[data-gh-stars-count]');
+    fetch('https://api.github.com/repos/jeironpro/pulsar')
+      .then((r) =>
+        r.ok ? r.json() : Promise.reject(new Error(String(r.status))),
+      )
+      .then((repo) => {
+        const n = Number(repo.stargazers_count);
+        if (!Number.isFinite(n)) return;
+        ghCount.textContent =
+          n >= 1000
+            ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
+            : String(n);
+        ghStars.hidden = false;
+      })
+      .catch(() => {
+        /* sin estrellas (red/rate-limit): el boton queda como esta */
+      });
+  }
+
   /* ============ Parallax (GSAP ScrollTrigger + mouse, carga on-demand) ============ */
   const heroLayers = $$('.hero [data-depth]');
   if (!REDUCED && heroLayers.length) {

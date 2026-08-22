@@ -96,6 +96,9 @@
             rel="noopener"
           >
             GitHub
+            <span class="nav-gh-stars" data-gh-stars hidden
+              >★ <span data-gh-stars-count></span
+            ></span>
             <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
               <path
                 d="M7 17L17 7M9 7h8v8"
@@ -193,10 +196,25 @@
       </div>
 
       <div class="hero-inner" data-depth="0.06">
-        <p class="eyebrow reveal">
+        <a
+          class="eyebrow pypi-link reveal"
+          href="https://pypi.org/project/pulsar-psr/"
+          target="_blank"
+          rel="noopener"
+        >
           <span class="chip-dot" aria-hidden="true"></span>
           Formato abierto de datos · pulsar-psr v2.0.1 · MIT
-        </p>
+          <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+            <path
+              d="M7 17L17 7M9 7h8v8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </a>
         <h1 class="hero-title reveal">
           Datos jerárquicos,<br />legibles a primera vista.
         </h1>
@@ -366,17 +384,8 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   />
-                  <text
-                    x="19"
-                    y="21"
-                    font-size="9"
-                    fill="currentColor"
-                    text-anchor="end"
-                    class="arrow-label"
-                  >
-                    psr parse
-                  </text>
                 </svg>
+                <span class="arrow-label">psr parse</span>
               </div>
               <figure class="code-card">
                 <figcaption>
@@ -1156,6 +1165,12 @@ OK</pre>
             target="_blank"
             rel="noopener"
             >Especificación ↗</a
+          >
+          <a
+            href="https://pypi.org/project/pulsar-psr/"
+            target="_blank"
+            rel="noopener"
+            >PyPI ↗</a
           >
           <a
             href="https://github.com/jeironpro/pulsar/blob/main/CONTRIBUTING.md"
