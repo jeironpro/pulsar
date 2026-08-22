@@ -28,6 +28,8 @@
         cp >> 28000
     <-
 
+<-
+
 -> contacto
     nombre >> "Bruno Díaz"
     edad >> 41
