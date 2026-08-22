@@ -41,6 +41,26 @@ Si encuentras un error o bug:
 
 ---
 
+## Sincronía del parser con la landing
+
+La landing (`landing/`) ejecuta el parser real en el navegador vía Pyodide usando una copia del módulo en `landing/pulsar.py`.
+
+Reglas:
+
+- **`landing/pulsar.py` debe ser idéntico a `pulsar.py`** (fuente única). El playground depende de esa copia exacta.
+- El workflow `pages.yml` la resincroniza automáticamente al desplegar (`cp pulsar.py landing/pulsar.py`).
+- El job **Parser sync (landing)** del CI (`ci.yml`) compara ambas copias en cada push/PR y **falla si divergen**.
+
+Para contribuir al parser:
+
+1. Edita `pulsar.py` (única fuente de verdad).
+2. Sincroniza la copia: `cp pulsar.py landing/pulsar.py`.
+3. Incluye ambos archivos en el mismo commit/PR (el CI verifica la identidad).
+
+Si el job `Parser sync (landing)` se marca en rojo, las copias divergen: ejecuta `cp pulsar.py landing/pulsar.py`, haz commit y vuelve a hacer push.
+
+---
+
 ## Normas Generales
 
 - Sé respetuoso y constructivo en tus comentarios.
