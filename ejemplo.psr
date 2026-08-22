@@ -1,0 +1,18 @@
+:: Ejemplo de archivo PULSAR
+-> user
+    name >> Juan
+    age >> 30
+    active >> true
+    skills >> python | go | rust
+
+    -> address
+        city >> Madrid
+        zip >> 28000
+    <-
+
+<-
+-> user
+    name >> Ana
+    age >> 25
+    skills >> javascript | html | css
+<-
