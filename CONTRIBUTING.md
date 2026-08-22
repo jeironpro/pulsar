@@ -1,6 +1,6 @@
-# Contributing to [pulsar]
+# Contributing to pulsar
 
-¡Gracias por interesarte en contribuir a [pulsar]!
+¡Gracias por interesarte en contribuir a pulsar!
 Tu ayuda hace que este proyecto sea mejor para todos, ya sea con código, ideas, documentación o reportes de errores.
 
 ## Cómo Contribuir
