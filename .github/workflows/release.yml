@@ -59,6 +59,7 @@ jobs:
     name: Publicar en PyPI (trusted publishing)
     needs: [test, release]
     runs-on: ubuntu-latest
+    environment: pypi
     permissions:
       id-token: write
     steps:
