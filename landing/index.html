@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PULSAR (.psr) — Datos jerárquicos, legibles a primera vista</title>
+  <meta name="description" content="PULSAR es un formato abierto de datos estructurados: bloques con ->, atributos con >>, listas con |. Parser Python, CLI, validador de esquemas y Docker. Prueba el playground con el parser real.">
+  <meta name="theme-color" content="#06070f">
+  <link rel="canonical" href="https://jeironpro.github.io/pulsar/">
+  <meta property="og:title" content="PULSAR (.psr) — Datos jerárquicos, legibles a primera vista">
+  <meta property="og:description" content="Formato abierto de datos estructurados con parser Python, CLI y validador de esquemas. Pruébalo en el navegador con el parser real.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jeironpro.github.io/pulsar/">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/transition-style">
+  <link rel="stylesheet" href="./assets/css/styles.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#inicio" aria-label="PULSAR — inicio">
+        <svg class="brand-mark" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.2" fill="currentColor"/>
+          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/>
+          <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1" opacity=".25"/>
+        </svg>
+        PULSAR
+      </a>
+      <nav class="nav-links" aria-label="Secciones">
+        <a href="#formato">El formato</a>
+        <a href="#playground">Playground</a>
+        <a href="#features">Características</a>
+        <a href="#cli">CLI</a>
+        <a href="#instalacion">Instalación</a>
+      </nav>
+      <a class="btn btn-ghost btn-sm nav-gh" href="https://github.com/jeironpro/pulsar" target="_blank" rel="noopener">
+        GitHub
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ============ HERO PARALLAX ============ -->
+  <section class="hero" id="inicio">
+    <canvas id="starfield" aria-hidden="true"></canvas>
+
+    <div class="nebula nebula-a" data-depth="0.15" aria-hidden="true"></div>
+    <div class="nebula nebula-b" data-depth="0.3" aria-hidden="true"></div>
+    <div class="nebula nebula-c" data-depth="0.45" aria-hidden="true"></div>
+
+    <div class="pulsar-scene" data-depth="0.5" aria-hidden="true">
+      <svg class="pulse-rings" viewBox="0 0 400 400">
+        <circle class="ring r1" cx="200" cy="200" r="40"/>
+        <circle class="ring r2" cx="200" cy="200" r="40"/>
+        <circle class="ring r3" cx="200" cy="200" r="40"/>
+      </svg>
+      <div class="star-core"></div>
+    </div>
+
+    <span class="ftoken t-arrow" style="--x:8%; --y:26%" data-depth="0.65" aria-hidden="true">-&gt;</span>
+    <span class="ftoken t-attr" style="--x:88%; --y:18%" data-depth="0.8" aria-hidden="true">&gt;&gt;</span>
+    <span class="ftoken t-pipe" style="--x:16%; --y:68%" data-depth="0.9" aria-hidden="true">|</span>
+    <span class="ftoken t-comment" style="--x:82%; --y:62%" data-depth="0.55" aria-hidden="true">::</span>
+    <span class="ftoken t-multi" style="--x:72%; --y:80%" data-depth="0.7" aria-hidden="true">&lt;&lt;</span>
+    <span class="ftoken t-close" style="--x:26%; --y:12%" data-depth="0.75" aria-hidden="true">&lt;-</span>
+
+    <div class="horizon" aria-hidden="true">
+      <svg class="hz hz-back" viewBox="0 0 1440 220" preserveAspectRatio="none"><path d="M0,140 C240,60 420,190 720,120 C1020,50 1240,170 1440,90 L1440,220 L0,220 Z"/></svg>
+      <svg class="hz hz-front" viewBox="0 0 1440 180" preserveAspectRatio="none"><path d="M0,110 C260,30 520,160 760,100 C1000,44 1220,150 1440,70 L1440,180 L0,180 Z"/></svg>
+    </div>
+
+    <div class="hero-inner" data-depth="0.06">
+      <p class="eyebrow reveal">
+        <span class="chip-dot" aria-hidden="true"></span>
+        Formato abierto de datos · v1.0 · Licencia MIT
+      </p>
+      <h1 class="hero-title reveal">Datos jerárquicos,<br>legibles a primera vista.</h1>
+      <p class="hero-sub reveal">
+        PULSAR (<code>.psr</code>) es un formato de datos estructurados que se lee como prosa:
+        bloques con <code>-&gt;</code>, atributos con <code>&gt;&gt;</code>, listas con <code>|</code>.
+        Sin llaves anidadas ni indentación traicionera.
+      </p>
+      <div class="hero-ctas reveal">
+        <a class="btn btn-primary" href="#playground">Probar en el playground</a>
+        <a class="btn btn-ghost" href="https://github.com/jeironpro/pulsar" target="_blank" rel="noopener">
+          Ver en GitHub
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <div class="install-chip reveal">
+        <code id="install-cmd">pip install pulsar-psr</code>
+        <button class="copy-btn" type="button" data-copy-target="#install-cmd" data-tip="Copiar comando" aria-label="Copiar comando de instalación">
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V6a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <a class="scroll-cue" href="#formato" aria-label="Ir a la sección El formato">
+      desliza
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4v14m0 0l-6-6m6 6l6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1440 110" preserveAspectRatio="none"><path d="M0,70 C280,10 560,105 860,55 C1120,12 1300,85 1440,35 L1440,110 L0,110 Z" fill="var(--bg-raised)"/></svg>
+  </div>
+
+  <main id="contenido">
+
+    <!-- ============ EL FORMATO ============ -->
+    <section class="section section-raised" id="formato">
+      <div class="container">
+        <header class="section-head">
+          <p class="kicker reveal">01 · El formato</p>
+          <h2 class="reveal">Tres símbolos y ya lo entiendes.</h2>
+          <p class="section-lede reveal">Todo el lenguaje cabe en una línea: los bloques se abren y se cierran de forma explícita, y cada atributo declara su valor sin ambigüedad.</p>
+        </header>
+
+        <div class="formato-grid">
+          <ul class="legend reveal" aria-label="Elementos de la sintaxis">
+            <li><kbd data-tip-html="#tip-block">-&gt; nombre</kbd><span>Inicia un bloque con nombre; puede contener atributos y otros bloques.</span></li>
+            <li><kbd data-tip-html="#tip-end">&lt;-</kbd><span>Cierra el bloque más reciente.</span></li>
+            <li><kbd data-tip-html="#tip-attr">clave &gt;&gt; valor</kbd><span>Atributo del bloque actual, con tipos nativos inferidos.</span></li>
+            <li><kbd data-tip-html="#tip-list">a | b | c</kbd><span>Lista en línea.</span></li>
+            <li><kbd data-tip-html="#tip-obj">{ k &gt;&gt; v }</kbd><span>Objeto inline.</span></li>
+            <li><kbd data-tip-html="#tip-comment">:: nota</kbd><span>Comentario hasta fin de línea.</span></li>
+            <li><kbd data-tip-html="#tip-multi">&lt;&lt; … &gt;&gt;</kbd><span>Texto multilínea literal.</span></li>
+          </ul>
+
+          <div class="formato-demo reveal">
+            <figure class="code-card">
+              <figcaption><span class="dot"></span>datos.psr</figcaption>
+<pre class="code-psr" data-lang="psr">-> usuario
+    nombre >> "Ada Lovelace"
+    edad >> 36
+    lenguajes >> python | matematicas
+    :: pionera de la computación
+    -> contacto
+        email >> ada@analytical.engine
+        ciudad >> Londres
+    <-
+<-</pre>
+            </figure>
+            <div class="transform-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3v14m0 0l-5-5m5 5l5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="19" y="21" font-size="9" fill="currentColor" text-anchor="end" class="arrow-label">psr parse</text></svg>
+            </div>
+            <figure class="code-card code-card-json">
+              <figcaption><span class="dot dot-teal"></span>salida JSON</figcaption>
+<pre class="code-json" data-lang="json">[
+  {
+    "tipo": "usuario",
+    "atributos": {
+      "nombre": "Ada Lovelace",
+      "edad": 36,
+      "lenguajes": ["python", "matematicas"]
+    },
+    "hijos": [
+      {
+        "tipo": "contacto",
+        "atributos": {
+          "email": "ada@analytical.engine",
+          "ciudad": "Londres"
+        },
+        "hijos": []
+      }
+    ]
+  }
+]</pre>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- tooltips flotantes (contenido) -->
+    <template id="tip-block"><strong>-&gt; nombre</strong><em>Inicia un bloque con nombre. Los identificadores admiten letras, números, guiones y guion bajo.</em></template>
+    <template id="tip-end"><strong>&lt;-</strong><em>Cierra el bloque más reciente. Si falta uno, el parser indica la línea exacta.</em></template>
+    <template id="tip-attr"><strong>clave &gt;&gt; valor</strong><em>El valor se infiere: enteros, decimales, booleanos, listas, objetos o texto entre comillas.</em></template>
+    <template id="tip-list"><strong>a | b | c</strong><em>Lista en línea. Para texto que contiene | usa comillas.</em></template>
+    <template id="tip-obj"><strong>{ k &gt;&gt; v }</strong><em>Objeto inline con pares clave-valor separados por |.</em></template>
+    <template id="tip-comment"><strong>:: nota</strong><em>Comentario ignorado por el parser. Dentro de comillas o bloques multilínea es texto literal.</em></template>
+    <template id="tip-multi"><strong>&lt;&lt; … &gt;&gt;</strong><em>Captura líneas crudas hasta una línea que contenga solo &gt;&gt;. Conserva líneas vacías.</em></template>
+
+    <!-- ============ PLAYGROUND ============ -->
+    <section class="section" id="playground">
+      <div class="container">
+        <header class="section-head">
+          <p class="kicker reveal">02 · Playground</p>
+          <h2 class="reveal">El parser real, aquí mismo.</h2>
+          <p class="section-lede reveal">No es una imitación en JavaScript: tu código se ejecuta con <code>pulsar.py</code> auténtico vía WebAssembly (Pyodide). La primera ejecución descarga ~10 MB solo cuando la pides.</p>
+        </header>
+
+        <div class="pg-wrap reveal">
+          <div class="pg-chips" role="group" aria-label="Ejemplos precargados">
+            <button class="chip is-active" type="button" data-example="contactos">Contactos</button>
+            <button class="chip" type="button" data-example="servidor">Servidor</button>
+            <button class="chip chip-danger" type="button" data-example="errores">Con errores</button>
+          </div>
+
+          <div class="pg-editor">
+            <label class="sr-only" for="psr-input">Editor de código PULSAR</label>
+            <textarea id="psr-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+              aria-describedby="pg-status"></textarea>
+          </div>
+
+          <div class="pg-actions">
+            <button class="btn btn-primary" id="pg-run" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg>
+              Parsear con Python real
+            </button>
+            <span id="pg-status" role="status" aria-live="polite"></span>
+          </div>
+
+          <div class="pg-output-grid">
+            <pre class="code-json pg-out" id="pg-out" aria-label="Salida JSON" hidden></pre>
+            <div class="pg-error" id="pg-error" hidden>
+              <strong>Error del parser</strong>
+              <code id="pg-error-msg"></code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CARACTERÍSTICAS ============ -->
+    <section class="section section-raised" id="features">
+      <div class="container">
+        <header class="section-head">
+          <p class="kicker reveal">03 · Características</p>
+          <h2 class="reveal">Pequeño por fuera, completo por dentro.</h2>
+        </header>
+
+        <div class="bento">
+          <article class="bento-card span-7 reveal">
+            <h3>Parser en tres fases</h3>
+            <p>Lexer → AST → builder. Cada error reporta línea y columna exactas — nunca tracebacks crípticos.</p>
+            <code class="mini-snippet">PSRLexError: Línea 4 col 12: operador incompleto</code>
+          </article>
+          <article class="bento-card span-5 reveal">
+            <h3>Validador de esquemas</h3>
+            <p>Esquemas en JSON o en el propio <code>.psr</code>: tipos, obligatorios, hijos esperados y modo estricto opt-in.</p>
+          </article>
+          <article class="bento-card span-4 reveal">
+            <h3>Round-trip fiel</h3>
+            <p>Serializa y re-parsea sin corromper tipos: <code>"42"</code> sigue siendo texto, no un número disfrazado.</p>
+          </article>
+          <article class="bento-card span-4 reveal">
+            <h3>CLI <code>psr</code></h3>
+            <p><code>parse</code>, <code>dump</code> y <code>validate</code> disponibles desde el primer <code>pip install</code>.</p>
+          </article>
+          <article class="bento-card span-4 reveal">
+            <h3>Docker oficial</h3>
+            <p>Imagen multi-stage publicada en GHCR, con el CLI como entrypoint.</p>
+            <code class="mini-snippet">ghcr.io/jeironpro/pulsar</code>
+          </article>
+          <article class="bento-card span-12 reveal">
+            <h3>Cero dependencias</h3>
+            <p>Solo biblioteca estándar de Python: instala en cualquier entorno sin resolver conflictos. El paquete completo pesa menos que este párrafo comprimido en gzip… casi.</p>
+          </article>
+        </div>
+
+        <dl class="stats-band reveal">
+          <div class="stat"><dt data-count="90">0</dt><dd>pruebas unitarias</dd></div>
+          <div class="stat"><dt data-count="5">0</dt><dd>versiones Python (3.10–3.14)</dd></div>
+          <div class="stat"><dt data-count="100" data-suffix="%">0</dt><dd>bajo licencia MIT</dd></div>
+          <div class="stat"><dt data-count="50" data-prefix="~" data-suffix=" MB">0</dt><dd>imagen Docker</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ CLI ============ -->
+    <section class="section" id="cli">
+      <div class="container container-narrow">
+        <header class="section-head">
+          <p class="kicker reveal">04 · CLI</p>
+          <h2 class="reveal">Tres comandos, cero fricción.</h2>
+        </header>
+
+        <div class="terminal reveal" role="img" aria-label="Demostración animada de la CLI de PULSAR parseando, serializando y validando archivos .psr">
+          <div class="terminal-bar">
+            <span class="t-dot t-red"></span><span class="t-dot t-yellow"></span><span class="t-dot t-green"></span>
+            <span class="terminal-title">psr — zsh</span>
+          </div>
+          <pre class="terminal-body" id="term-body" aria-hidden="true"></pre>
+          <noscript><pre class="terminal-body">$ psr validate -f usuarios.psr -s esquema.json
+Archivo válido ✔</pre></noscript>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPARATIVA ============ -->
+    <section class="section section-raised" id="comparativa">
+      <div class="container">
+        <header class="section-head">
+          <p class="kicker reveal">05 · Comparativa</p>
+          <h2 class="reveal">Diseñado donde otros formatos cojean.</h2>
+        </header>
+
+        <div class="table-scroll reveal">
+          <table class="compare">
+            <caption class="sr-only">Comparación de PULSAR frente a JSON, YAML y TOML</caption>
+            <thead>
+              <tr>
+                <th scope="col">Criterio</th>
+                <th scope="col" class="col-pulsar">PULSAR</th>
+                <th scope="col">JSON</th>
+                <th scope="col">YAML</th>
+                <th scope="col">TOML</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Comentarios</th>
+                <td class="col-pulsar"><span class="i-ok"></span> con ::</td>
+                <td><span class="i-no"></span></td>
+                <td><span class="i-ok"></span> con #</td>
+                <td><span class="i-ok"></span> con #</td></tr>
+              <tr><th scope="row">Tipos nativos</th>
+                <td class="col-pulsar"><span class="i-ok"></span></td>
+                <td><span class="i-ok"></span></td>
+                <td><span class="i-ok"></span></td>
+                <td><span class="i-ok"></span></td></tr>
+              <tr><th scope="row">Esquemas integrados</th>
+                <td class="col-pulsar"><span class="i-ok"></span> + modo estricto</td>
+                <td><span class="i-no"></span></td>
+                <td><span class="i-mid"></span> externos</td>
+                <td><span class="i-no"></span></td></tr>
+              <tr><th scope="row">Anidación profunda legible</th>
+                <td class="col-pulsar"><span class="i-ok"></span> bloques explícitos</td>
+                <td><span class="i-mid"></span> llaves</td>
+                <td><span class="i-mid"></span> indentación frágil</td>
+                <td><span class="i-mid"></span> tablas repetidas</td></tr>
+              <tr><th scope="row">Multilínea simple</th>
+                <td class="col-pulsar"><span class="i-ok"></span> &lt;&lt; … &gt;&gt;</td>
+                <td><span class="i-mid"></span> escapes</td>
+                <td><span class="i-ok"></span></td>
+                <td><span class="i-mid"></span> triples comillas</td></tr>
+              <tr><th scope="row">CLI + validador incluidos</th>
+                <td class="col-pulsar"><span class="i-ok"></span></td>
+                <td><span class="i-no"></span></td>
+                <td><span class="i-no"></span></td>
+                <td><span class="i-no"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CASOS DE USO ============ -->
+    <section class="section" id="casos">
+      <div class="container-wide">
+        <header class="section-head">
+          <p class="kicker reveal">06 · Casos de uso</p>
+          <h2 class="reveal">Donde PULSAR late mejor.</h2>
+        </header>
+
+        <div class="swiper casos-swiper reveal">
+          <div class="swiper-wrapper">
+            <div class="swiper-slide caso">
+              <header class="caso-head"><span class="caso-num">01</span><h3>Configuración de aplicaciones</h3></header>
+              <p>Bloques anidados para entornos y límites, sin depender de la suerte con la indentación.</p>
+<pre class="code-psr mini" data-lang="psr">-> entorno produccion
+    debug >> false
+    limites >> { rpm >> 500 }
+<-</pre>
+            </div>
+            <div class="swiper-slide caso">
+              <header class="caso-head"><span class="caso-num">02</span><h3>Datasets legibles</h3></header>
+              <p>Registros uno tras otro, diff-friendly y revisables en pull requests sin dolor.</p>
+<pre class="code-psr mini" data-lang="psr">-> sensor
+    id >> th-01
+    lecturas >> 21.4 | 21.7 | 22.1
+<-</pre>
+            </div>
+            <div class="swiper-slide caso">
+              <header class="caso-head"><span class="caso-num">03</span><h3>Esquemas validados</h3></header>
+              <p>Tipos y campos obligatorios verificados antes de que el dato llegue a producción.</p>
+<pre class="code-psr mini" data-lang="psr">:: esquema.psr
+-> usuario
+    nombre >> str
+    edad >> int
+<-</pre>
+            </div>
+            <div class="swiper-slide caso">
+              <header class="caso-head"><span class="caso-num">04</span><h3>Enseñanza</h3></header>
+              <p>Tres símbolos para explicar estructuras de datos, árboles y recursión sin ruido sintáctico.</p>
+<pre class="code-psr mini" data-lang="psr">-> nodo
+    valor >> 7
+    -> hijo
+        valor >> 3
+    <-
+<-</pre>
+            </div>
+            <div class="swiper-slide caso">
+              <header class="caso-head"><span class="caso-num">05</span><h3>Fixtures de CI</h3></header>
+              <p>Pars determinista, salida JSON estable y cero dependencias: perfecto para pipelines.</p>
+<pre class="code-mini-shell" aria-hidden="true">$ python -m unittest discover tests
+Ran 90 tests in 0.002s
+
+OK</pre>
+            </div>
+          </div>
+          <div class="casos-footer">
+            <button class="sw-nav sw-prev" type="button" aria-label="Caso anterior"></button>
+            <div class="swiper-pagination"></div>
+            <button class="sw-nav sw-next" type="button" aria-label="Caso siguiente"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INSTALACIÓN ============ -->
+    <section class="section section-raised" id="instalacion">
+      <div class="container container-narrow">
+        <header class="section-head">
+          <p class="kicker reveal">07 · Instalación</p>
+          <h2 class="reveal">Listo en menos de un minuto.</h2>
+        </header>
+
+        <div class="tabs reveal">
+          <div class="tab-list" role="tablist" aria-label="Métodos de instalación">
+            <button class="tab is-active" id="tab-pip" role="tab" aria-selected="true" aria-controls="panel-pip">pip</button>
+            <button class="tab" id="tab-docker" role="tab" aria-selected="false" aria-controls="panel-docker" tabindex="-1">Docker</button>
+            <button class="tab" id="tab-src" role="tab" aria-selected="false" aria-controls="panel-src" tabindex="-1">Desde fuente</button>
+          </div>
+
+          <div class="tab-panel is-active" id="panel-pip" role="tabpanel" aria-labelledby="tab-pip">
+            <div class="cmd-line"><code>$ pip install pulsar-psr</code><button class="copy-btn" type="button" data-copy-text="pip install pulsar-psr" data-tip="Copiar" aria-label="Copiar comando pip install">⧉</button></div>
+            <div class="cmd-line"><code>$ psr parse -f datos.psr</code><button class="copy-btn" type="button" data-copy-text="psr parse -f datos.psr" data-tip="Copiar" aria-label="Copiar comando psr parse">⧉</button></div>
+            <p class="tab-note">Requiere Python 3.10+. Instala también el comando <code>psr</code> global.</p>
+          </div>
+
+          <div class="tab-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+            <div class="cmd-line"><code>$ docker run --rm -v "$PWD:/data" ghcr.io/jeironpro/pulsar parse -f /data/datos.psr</code><button class="copy-btn" type="button" data-copy-text='docker run --rm -v "$PWD:/data" ghcr.io/jeironpro/pulsar parse -f /data/datos.psr' data-tip="Copiar" aria-label="Copiar comando docker">⧉</button></div>
+            <p class="tab-note">Etiquetas <code>latest</code>, <code>1.0</code> y <code>1.0.0</code> en GitHub Container Registry.</p>
+          </div>
+
+          <div class="tab-panel" id="panel-src" role="tabpanel" aria-labelledby="tab-src" hidden>
+            <div class="cmd-line"><code>$ git clone https://github.com/jeironpro/pulsar.git && cd pulsar && pip install .</code><button class="copy-btn" type="button" data-copy-text="git clone https://github.com/jeironpro/pulsar.git && cd pulsar && pip install ." data-tip="Copiar" aria-label="Copiar comandos git clone">⧉</button></div>
+            <p class="tab-note">Ideal si quieres tocar el lexer: la suite completa vive en <code>tests/</code>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section" id="faq">
+      <div class="container container-narrow">
+        <header class="section-head">
+          <p class="kicker reveal">08 · FAQ</p>
+          <h2 class="reveal">Preguntas frecuentes.</h2>
+        </header>
+
+        <div class="faq reveal">
+          <details>
+            <summary>¿Por qué otro formato de datos más?</summary>
+            <p>JSON prioriza a las máquinas y YAML/TOML nacieron para configuración. PULSAR optimiza la lectura humana de datos jerárquicos: tres símbolos, bloques con cierre explícito y cero ambigüedad por indentación.</p>
+          </details>
+          <details>
+            <summary>¿Reemplaza a JSON?</summary>
+            <p>No busca reemplazarlo sino convivir: <code>psr parse</code> emite JSON cuando lo necesitas y el validador acepta esquemas escritos en JSON.</p>
+          </details>
+          <details>
+            <summary>¿Cómo funcionan los esquemas?</summary>
+            <p>Un esquema declara el tipo del bloque, sus atributos (tipo y obligatoriedad) e hijos esperados. Con <code>"estricto": true</code> además rechaza atributos no declarados.</p>
+          </details>
+          <details>
+            <summary>¿Qué pasa si mi archivo tiene errores?</summary>
+            <p>El parser reporta la línea y columna del problema («bloque sin cerrar», «operador incompleto», «nombre inválido») en lugar de un stack trace ilegible.</p>
+          </details>
+          <details>
+            <summary>¿Hay imagen de Docker oficial?</summary>
+            <p>Sí: <code>ghcr.io/jeironpro/pulsar</code>. Imagen multi-stage (~50 MB) con el CLI como entrypoint; monta tu directorio de trabajo en <code>/data</code>.</p>
+          </details>
+          <details>
+            <summary>¿Cómo contribuyo?</summary>
+            <p>Lee <a href="https://github.com/jeironpro/pulsar/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a>: issues etiquetados como idea, PRs con pruebas y CI verde en Python 3.10–3.14.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA FINAL ============ -->
+    <section class="cta-final" id="cta">
+      <canvas id="starfield-cta" aria-hidden="true"></canvas>
+      <div class="cta-glow" aria-hidden="true"></div>
+      <div class="container">
+        <h2 class="reveal">Dale pulso a tus datos.</h2>
+        <p class="reveal">Instala, parsea y valida en menos de un minuto.</p>
+        <div class="hero-ctas reveal">
+          <a class="btn btn-primary" href="https://github.com/jeironpro/pulsar" target="_blank" rel="noopener">
+            Ir al repositorio
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#playground">Volver al playground</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="#inicio">
+          <svg class="brand-mark" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.2" fill="currentColor"/>
+            <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/>
+            <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1" opacity=".25"/>
+          </svg>
+          PULSAR
+        </a>
+        <p>Formato abierto de datos estructurados, legible por humanos y extensible por diseño.</p>
+      </div>
+      <nav class="footer-col" aria-label="Proyecto">
+        <h3>Proyecto</h3>
+        <a href="https://github.com/jeironpro/pulsar" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="https://github.com/jeironpro/pulsar/releases" target="_blank" rel="noopener">Releases ↗</a>
+        <a href="https://github.com/jeironpro/pulsar/issues" target="_blank" rel="noopener">Issues ↗</a>
+      </nav>
+      <nav class="footer-col" aria-label="Recursos">
+        <h3>Recursos</h3>
+        <a href="https://github.com/jeironpro/pulsar#readme" target="_blank" rel="noopener">Especificación ↗</a>
+        <a href="https://github.com/jeironpro/pulsar/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribuir ↗</a>
+        <a href="https://github.com/jeironpro/pulsar/pkgs/container/pulsar" target="_blank" rel="noopener">Imagen Docker ↗</a>
+      </nav>
+    </div>
+    <div class="footer-bar">
+      <p>© 2026 PULSAR</p>
+      <p class="footer-made">Hecho con Python y un poco de polvo de estrella.</p>
+    </div>
+  </footer>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.13/dist/floating-ui.dom.min.js"></script>
+  <script defer src="./assets/js/main.js"></script>
+  <script defer src="./assets/js/playground.js"></script>
+</body>
+</html>
