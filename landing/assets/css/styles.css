@@ -334,6 +334,12 @@ canvas {
 .nav-gh {
   white-space: nowrap;
 }
+.nav-gh-stars {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-left: 0.35rem;
+}
 
 /* ============ Hero ============ */
 .hero {
@@ -540,6 +546,17 @@ canvas {
   font-size: 0.76rem;
   letter-spacing: 0.06em;
   color: var(--text-mid);
+}
+.pypi-link {
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+.pypi-link:hover,
+.pypi-link:focus-visible {
+  border-color: var(--gold);
+  color: var(--text-hi);
 }
 .chip-dot {
   width: 7px;
@@ -792,12 +809,15 @@ canvas {
 
 .transform-arrow {
   display: grid;
-  place-items: start center;
+  place-items: center;
+  gap: 0.15rem;
   color: var(--gold);
   padding-block: 0.1rem;
 }
 .arrow-label {
   font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
 }
 
 .mini-snippet {
