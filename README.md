@@ -31,7 +31,7 @@ PULSAR no busca competir con JSON o YAML, sino **modelar entidades y relaciones*
 
 * Extensión oficial: `.psr`
 * Codificación: UTF-8
-* Sensible a mayúsculas en claves (`tipo`, `atributos`, `hijos`)
+* Sensible a mayúsculas en claves (`type`, `attributes`, `children`)
 
 ---
 
@@ -84,6 +84,9 @@ Un archivo contiene uno o más **bloques de nodo**. Cada bloque se abre con `-> 
 * `<tipo>` es un identificador sin espacios
 * `>>` separa clave y valor en atributos
 * `|` separa elementos en listas
+* `"..."` fuerza texto (preserva strings que parecen número o booleano)
+* `{ k >> v | ... }` define un objeto inline
+* `<<` … `>>` captura texto multilínea literal, hasta una línea con solo `>>`
 * No se usan comas
 * Los bloques hijos se anidan dentro del bloque padre
 * `::` inicia un comentario (todo tras `::` se ignora)
@@ -194,13 +197,9 @@ Un parser PULSAR **DEBE fallar** si:
 La siguiente gramática define de forma estricta la sintaxis válida de un archivo **PULSAR (.psr)**. Cualquier implementación oficial debe cumplirla.
 
 ```
-psr_file        = meta_section , data_section ;
+psr_file        = { block } , EOF ;
 
-meta_section    = "_meta" , block ;
-
-data_section    = "data" , block ;
-
-block           = block_start , { statement } , block_end ;
+block           = block_start , { statement | comment } , block_end ;
 
 block_start     = "->" , WS , identifier , EOL ;
 block_end       = "<-" , EOL ;
@@ -209,21 +208,26 @@ statement       = attribute | block ;
 
 attribute       = identifier , WS , ">>" , WS , value , EOL ;
 
-value           = list | boolean | number | string | multiline ;
+value           = list | object | boolean | number | string | multiline ;
 
 list            = value , { WS , "|" , WS , value } ;
 
+object          = "{" , WS , [ pair , { WS , "|" , WS , pair } ] , WS , "}" ;
+pair            = identifier , WS , ">>" , WS , value ;
+
 boolean         = "true" | "false" ;
 
-number          = int | float ;
+number          = [ "-" ] , ( int | float ) ;
 int             = digit , { digit } ;
 float           = digit , { digit } , "." , digit , { digit } ;
 
 string          = quoted_string | bare_string ;
 quoted_string   = '"' , { char } , '"' ;
-bare_string     = identifier ;
+bare_string     = { char_no_comma } ;
 
 multiline       = "<<" , EOL , { multiline_char } , ">>" ;
+
+comment         = "::" , { char } , EOL ;
 
 identifier      = letter , { letter | digit | "-" | "_" } ;
 
@@ -231,11 +235,20 @@ letter          = "a"…"z" | "A"…"Z" ;
 digit           = "0"…"9" ;
 
 char            = ? any character except '"' ? ;
+char_no_comma   = ? any character except ',' ? ;
 multiline_char  = ? any character except '>>' ? ;
 
 WS              = { " " | "\t" } ;
 EOL             = "\n" | "\r\n" ;
+EOF             = ? end of file ? ;
 ```
+
+Notas de implementación (coinciden con `pulsar.py`):
+
+* Un archivo es una **colección de nodos raíz**: no existen secciones `_meta`/`data`.
+* `bare_string` acepta espacios y la mayoría de caracteres (`Juan Perez`, `postgres://localhost/app`); las comas están prohibidas.
+* Un número con cero a la izquierda y más de un dígito es **string** (`007` → `"007"`); con punto decimal sí es float (`007.5` → 7.5).
+* `quoted_string` no admite comillas dobles internas; el serializador convierte `"` → `'` al citar.
 
 ---
 
@@ -252,23 +265,16 @@ El **lexer** es responsable de convertir el texto plano de un archivo `.psr` en 
 
 ---
 
-### 3.2 Tipos de tokens
+### 3.2 Tipos de tokens (implementación real)
 
-| Token               | Descripción                 | Ejemplo               |
-| ------------------- | --------------------------- | --------------------- |
-| `BLOCK_START`       | Inicio de bloque            | `-> user`             |
-| `BLOCK_END`         | Fin de bloque               | `<-`                  |
-| `IDENTIFIER`        | Nombre de bloque o atributo | `user`, `age`         |
-| `ATTR_ASSIGN`       | Operador de atributo        | `>>`                  |
-| `LIST_SEPARATOR`    | Separador de lista          | <code>\`\|\`</code>   |
-| `BOOLEAN`           | Booleano literal            | `true`, `false`       |
-| `NUMBER`            | Entero o decimal            | `30`, `3.14`          |
-| `STRING`            | String simple o quoted      | `Juan`, `"hola"`      |
-| `MULTILINE_START`   | Inicio multilinea           | `<<`                  |
-| `MULTILINE_END`     | Fin multilinea              | `>>`                  |
-| `MULTILINE_CONTENT` | Contenido literal           | texto libre           |
-| `EOL`               | Fin de línea                | —                     |
-| `EOF`               | Fin de archivo              | —                     |
+| Token         | Descripción                       | Ejemplo           |
+| ------------- | --------------------------------- | ----------------- |
+| `BLOCK_START` | Inicio de bloque                  | `-> user`         |
+| `BLOCK_END`   | Fin de bloque                     | `<-`              |
+| `ATTRIBUTE`   | Atributo: clave + valor crudo     | `name >> Juan`    |
+| `EOF`         | Fin de archivo                    | —                 |
+
+> La implementación real (`lex_psr`) emite estos 4 tokens. A diferencia de un modelo teórico, el lexer **no** etiqueta literales (`NUMBER`, `BOOLEAN`, `STRING`, `MULTILINE_*`…): entrega el valor como **texto crudo** en el token `ATTRIBUTE` y la inferencia de tipos ocurre en el builder (§5).
 
 ---
 
@@ -288,12 +294,10 @@ El **lexer** es responsable de convertir el texto plano de un archivo `.psr` en 
 ### 3.4 Representación de un token
 
 ```python
-Token = {
-    "type": "IDENTIFIER",
-    "value": "user",
-    "line": 12,
-    "column": 5
-}
+BLOCK_START = {"type": "BLOCK_START", "value": "user", "line": 1, "column": 2}
+ATTRIBUTE   = {"type": "ATTRIBUTE", "key": "name", "value": "Juan", "line": 2, "column": 6}
+BLOCK_END   = {"type": "BLOCK_END", "value": "<-", "line": 3, "column": 1}
+EOF         = {"type": "EOF", "value": "", "line": 4, "column": 0}
 ```
 
 ---
@@ -329,17 +333,17 @@ Entrada:
 <-
 ```
 
-Salida (simplificada):
+Salida real del lexer (`lex_psr`):
 
 ```
 BLOCK_START(user)
-IDENTIFIER(name) ATTR_ASSIGN STRING(Juan)
-IDENTIFIER(skills) ATTR_ASSIGN STRING(python) LIST_SEPARATOR STRING(go)
+ATTRIBUTE(name, Juan)
+ATTRIBUTE(skills, python | go)
 BLOCK_END
 EOF
 ```
 
-Este lexer es la base del **parser AST** del Paso 4.
+Los tipos (`int`, `bool`, listas, objetos…) se resuelven después, en el builder. Este lexer es la base del **parser AST** del Paso 4.
 
 ---
 
@@ -410,7 +414,7 @@ AttributeNode = {
 ValueNode = {
     "type": "value",
     "raw": "30",
-    "kind": "int" | "float" | "bool" | "string" | "list",
+    "kind": "int" | "float" | "bool" | "string" | "list" | "object",
     "value": 30
 }
 ```
@@ -518,22 +522,22 @@ Funciona en tres pasos:
 
 1. Recorrer el AST recursivamente
 2. Transformar `BlockNode` y `AttributeNode` en diccionarios Python
-3. Resolver `ValueNode` a tipos Python (`str`, `int`, `float`, `bool`, `list`)
+3. Resolver `ValueNode` a tipos Python (`str`, `int`, `float`, `bool`, `list`, `dict`)
 
 ```python
 def build_block(block_node):
     # Construye un dict Python a partir del AST
     block_dict = {
-        'tipo': block_node.name,
-        'atributos': {},
-        'hijos': []
+        'type': block_node.name,
+        'attributes': {},
+        'children': []
     }
 
     for attr in block_node.attributes:
-        block_dict['atributos'][attr.key] = resolve_value(attr.value)
+        block_dict['attributes'][attr.key] = resolve_value(attr.value)
 
     for child in block_node.children:
-        block_dict['hijos'].append(build_block(child))
+        block_dict['children'].append(build_block(child))
 
     return block_dict
 
@@ -541,6 +545,8 @@ def build_block(block_node):
 def resolve_value(value_node):
     if value_node.kind == 'list':
         return [resolve_value(v) for v in value_node.value]
+    elif value_node.kind == 'object':
+        return {k: resolve_value(v) for k, v in value_node.value.items()}
     elif value_node.kind == 'int':
         return int(value_node.value)
     elif value_node.kind == 'float':
@@ -618,21 +624,22 @@ Esto permite usar PULSAR fuera de Python directamente en proyectos y pipelines.
 ## 6.1 Estructura del CLI
 
 ```
-Usage: psr [OPTIONS] COMMAND [ARGS]...
+Usage: psr [-h] [-V] {parse,dump,validate,version} ...
 
 Commands:
-  parse      Parsear un archivo .psr y mostrar AST
-  validate   Validar un archivo .psr contra un schema
-  dump       Serializar un objeto Python a .psr
-  version    Mostrar versión de PULSAR
+  parse      Parse a .psr file and print JSON
+  dump       Re-serialize a .psr file (round-trip)
+  validate   Validate a .psr file against a schema
+  version    Show version
 ```
 
-Opciones globales:
+Opciones (por subcomando, construidas con `argparse`):
 
-* `--file, -f` → archivo de entrada
-* `--schema, -s` → archivo schema (JSON / PSR)
-* `--output, -o` → archivo de salida (para dump)
-* `--verbose, -v` → modo detallado
+* `-f, --file` → archivo de entrada (obligatorio en `parse`, `dump` y `validate`)
+* `-s, --schema` → archivo schema (JSON o `.psr`; solo `validate`)
+* `-o, --output` → archivo de salida (solo `dump`; stdout si se omite)
+* `-V, --version` → muestra la versión del CLI (global)
+* `-h, --help` → ayuda
 
 ---
 
@@ -644,8 +651,8 @@ Opciones globales:
 psr parse -f users.psr
 ```
 
-* Muestra AST o errores léxicos/sintácticos
-* Salida: JSON por defecto
+* Muestra la estructura o errores léxicos/sintácticos
+* Salida: JSON indentado con 4 espacios (`json.dumps(..., indent=4, ensure_ascii=False)`)
 
 ### 6.2.2 Validar
 
@@ -654,7 +661,9 @@ psr validate -f users.psr -s user_schema.json
 ```
 
 * Usa la estructura Python generada por el Builder
-* Devuelve errores de schema o confirmación de validez
+* Los hijos se emparejan por `type` (no por posición): se exige al menos un hijo por tipo declarado y se rechazan tipos de hijo no declarados
+* Si es válido: imprime `File valid ✅`
+* Si hay errores: imprime `Error: ...` en stderr y termina con código de salida 1
 
 ### 6.2.3 Serializar / Dump
 
@@ -662,8 +671,8 @@ psr validate -f users.psr -s user_schema.json
 psr dump -f users.psr -o out.psr
 ```
 
-* Convierte dict/list Python a texto PULSAR
-* Puede ser usada para round-trip (parse → dump)
+* Lee el archivo `.psr`, lo parsea y lo re-serializa (round-trip fiel)
+* Escribe en `-o` o en stdout si se omite; con `-o` imprime `Dump file created at: <archivo>`
 
 ### 6.2.4 Mostrar versión
 
@@ -671,87 +680,19 @@ psr dump -f users.psr -o out.psr
 psr version
 ```
 
-* Muestra versión actual (1.0)
+* Muestra la versión actual: `PULSAR CLI v2.0.0`
 
 ---
 
-## 6.3 Implementación mínima Python
+## 6.3 Implementación real
 
-```python
-# ----------------------------
-# CLI manual
-# ----------------------------
-def main():
-    if len(sys.argv) < 2:
-        print("Uso: python pulsar.py [parse|dump|validate|version] opciones")
-        return
+El CLI vive en `pulsar.py` y está construido con `argparse` y subcomandos:
 
-    cmd = sys.argv[1].lower()
-    args = sys.argv[2:]
-    opts = {}
-    i = 0
-    while i < len(args):
-        if args[i].startswith("--"):
-            key = args[i][2:]
-            if i + 1 < len(args) and not args[i+1].startswith("--"):
-                opts[key] = args[i+1]
-                i += 1
-            else:
-                opts[key] = True
-        elif args[i].startswith("-"):
-            key = args[i][1:]
-            if i + 1 < len(args) and not args[i+1].startswith("-"):
-                opts[key] = args[i+1]
-                i += 1
-            else:
-                opts[key] = True
-        i += 1
-
-    try:
-        if cmd == "version":
-            print("PULSAR CLI v2.0.0")
-            return
-
-        elif cmd == "parse":
-            file_path = opts.get("file") or opts.get("f")
-            if not file_path: raise ValueError("Debe indicar --file o -f")
-            ast = load_psr(file_path)
-            print(json.dumps(build_document(ast), indent=4))
-
-        elif cmd == "dump":
-            file_path = opts.get("file") or opts.get("f")
-            output = opts.get("output") or opts.get("o")
-            if not file_path: raise ValueError("Debe indicar --file o -f")
-            ast = load_psr(file_path)
-            data = build_document(ast)
-            dump_psr(data, output)
-            print(f"Dump file created at: {output or 'stdout'}")
-
-        elif cmd == "validate":
-            file_path = opts.get("file") or opts.get("f")
-            schema_path = opts.get("schema") or opts.get("s")
-            if not file_path or not schema_path:
-                raise ValueError("Debe indicar --file/-f y --schema/-s")
-            ast = load_psr(file_path)
-            data = build_document(ast)
-            with open(schema_path) as f:
-                sch = json.load(f)
-            errs = validate_psr(data, sch)
-            if errs:
-                for e in errs:
-                    print("Error:", e)
-            else:
-                print("File valid ✅")
-        else:
-            print(f"Comando desconocido: {cmd}")
-
-    except Exception as e:
-        print("Error:", e)
-
-if __name__=="__main__":
-    main()
-```
+* Entry points: consola `psr` (definido en `[project.scripts]` de `pyproject.toml`) y `python -m pulsar` (vía `__main__.py`).
+* `main()` define los subcomandos `parse`, `dump`, `validate` y `version` con sus opciones por subcomando (§6.1).
+* Los errores esperados (`PSRLexError`, `PSRParseError`, `OSError`, `json.JSONDecodeError`, `ValueError`) se capturan y muestran como `Error: ...` en stderr, con código de salida 1.
+* La versión es única y centralizada en `pulsar.__version__` (leída dinámicamente por `pyproject.toml`).
 
 ---
 
-PULSAR 1.0
+PULSAR 2.0.0

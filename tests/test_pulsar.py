@@ -509,9 +509,13 @@ class TestValidator(unittest.TestCase):
             ],
         }
         errs = validate_psr(data, schema)
-        self.assertEqual(len(errs), 1)
-        self.assertIn("missing", errs[0])
-        self.assertIn("b, c", errs[0])
+        self.assertEqual(
+            errs,
+            [
+                "Block a has missing children: b",
+                "Block a has missing children: c",
+            ],
+        )
 
     def test_partial_missing_children(self):
         data = [
@@ -532,6 +536,121 @@ class TestValidator(unittest.TestCase):
         errs = validate_psr(data, schema)
         self.assertEqual(len(errs), 1)
         self.assertIn("c", errs[0])
+
+    def test_children_matched_by_type_out_of_order(self):
+        data = [
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [
+                    {"type": "b", "attributes": {"x": 1}, "children": []},
+                    {"type": "c", "attributes": {"x": 2}, "children": []},
+                ],
+            }
+        ]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [
+                {"type": "c", "attributes": {"x": {"type": "int"}}, "children": []},
+                {"type": "b", "attributes": {"x": {"type": "int"}}, "children": []},
+            ],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(errs, [])
+
+    def test_multiple_children_same_declared_type_ok(self):
+        data = [
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [
+                    {"type": "b", "attributes": {"x": 1}, "children": []},
+                    {"type": "b", "attributes": {"x": 2}, "children": []},
+                ],
+            }
+        ]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [{"type": "b", "attributes": {"x": {"type": "int"}}, "children": []}],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(errs, [])
+
+    def test_children_same_type_validated_recursively(self):
+        data = [
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [
+                    {"type": "b", "attributes": {"x": 1}, "children": []},
+                    {"type": "b", "attributes": {"x": "bad"}, "children": []},
+                ],
+            }
+        ]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [{"type": "b", "attributes": {"x": {"type": "int"}}, "children": []}],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
+
+    def test_undeclared_child_type_error(self):
+        data = [
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [
+                    {"type": "b", "attributes": {}, "children": []},
+                    {"type": "z", "attributes": {}, "children": []},
+                ],
+            }
+        ]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [{"type": "b", "attributes": {}, "children": []}],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("undeclared", errs[0])
+        self.assertIn("z", errs[0])
+
+    def test_missing_child_by_type(self):
+        data = [{"type": "a", "attributes": {}, "children": []}]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [
+                {"type": "b", "attributes": {}, "children": []},
+                {"type": "c", "attributes": {}, "children": []},
+            ],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 2)
+        self.assertIn("missing", errs[0])
+        self.assertIn("missing", errs[1])
+
+    def test_duplicate_schema_child_types_validated_once(self):
+        data = [
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [{"type": "b", "attributes": {"x": "bad"}, "children": []}],
+            }
+        ]
+        schema = {
+            "type": "a",
+            "attributes": {},
+            "children": [
+                {"type": "b", "attributes": {"x": {"type": "int"}}, "children": []},
+                {"type": "b", "attributes": {"x": {"type": "int"}}, "children": []},
+            ],
+        }
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
 
     def test_lenient_allows_extra_attrs(self):
         data = [{"type": "x", "attributes": {"extra": 1}, "children": []}]

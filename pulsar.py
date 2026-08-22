@@ -390,14 +390,29 @@ def validate_block(block: dict[str, Any], schema: dict[str, Any]) -> list[str]:
                 errors.append(f"Attribute {k} not allowed in {block['type']} (strict mode)")
     block_children = block.get("children", [])
     schema_children = schema.get("children", [])
-    for i, child_schema in enumerate(schema_children):
-        if i < len(block_children):
-            errors.extend(validate_block(block_children[i], child_schema))
-    if len(block_children) > len(schema_children):
-        errors.append(f"Block {block['type']} has more children than expected")
-    if len(block_children) < len(schema_children):
-        missing = ", ".join(s["type"] for s in schema_children[len(block_children) :])
-        errors.append(f"Block {block['type']} has missing children: {missing}")
+
+    # Emparejamiento de hijos por type (no por posición): cada tipo declarado
+    # en el schema exige al menos un hijo y se valida recursivamente; los tipos
+    # de hijo no declarados producen error.
+    children_by_type: dict[str, list[dict[str, Any]]] = {}
+    for child in block_children:
+        children_by_type.setdefault(child["type"], []).append(child)
+
+    declared_types: set[str] = set()
+    for child_schema in schema_children:
+        ctype = child_schema["type"]
+        if ctype in declared_types:
+            continue  # declaraciones duplicadas del mismo tipo se validan una vez
+        declared_types.add(ctype)
+        matches = children_by_type.get(ctype, [])
+        if not matches:
+            errors.append(f"Block {block['type']} has missing children: {ctype}")
+        for match in matches:
+            errors.extend(validate_block(match, child_schema))
+
+    for ctype in children_by_type:
+        if ctype not in declared_types:
+            errors.append(f"Block {block['type']} has undeclared children of type {ctype}")
     return errors
 
 
