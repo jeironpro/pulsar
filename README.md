@@ -10,6 +10,32 @@
 > **Propósito:** Formato de datos estructurados, legible por humanos, jerárquico y extensible, diseñado desde cero (no derivado de JSON/YAML/TOML).  
 > **Contribuciones:** leer [CONTRIBUTING](CONTRIBUTING.md).  
 > **Desarrollo:** Este formato se desarrollo por la idea de un tipo de archivo diferente a los demas y facil de leer, se creo con la ayuda del modelo/IA ChatGPT.
+---
+
+## Instalación
+
+PULSAR se distribuye como paquete Python en PyPI: `pulsar-psr` (Python ≥ 3.10, **sin dependencias**).
+
+```bash
+pip install pulsar-psr
+```
+
+Instala la librería y el comando `psr`:
+
+```bash
+psr version                        # muestra la versión del CLI
+psr parse -f datos.psr             # parsea y muestra JSON
+psr validate -f datos.psr -s esquema.json   # valida contra un schema
+```
+
+Uso como librería:
+
+```python
+from pulsar import load_psr, build_document, validate_psr
+
+ast = load_psr("datos.psr")
+data = build_document(ast)          # list[dict] con type / attributes / children
+```
 
 ---
 
@@ -692,6 +718,13 @@ El CLI vive en `pulsar.py` y está construido con `argparse` y subcomandos:
 * `main()` define los subcomandos `parse`, `dump`, `validate` y `version` con sus opciones por subcomando (§6.1).
 * Los errores esperados (`PSRLexError`, `PSRParseError`, `OSError`, `json.JSONDecodeError`, `ValueError`) se capturan y muestran como `Error: ...` en stderr, con código de salida 1.
 * La versión es única y centralizada en `pulsar.__version__` (leída dinámicamente por `pyproject.toml`).
+---
+
+## Desarrollo y release
+
+* **Contribuciones:** ver [CONTRIBUTING](CONTRIBUTING.md). Incluye cómo mantener sincronizada la copia del parser en `landing/pulsar.py` con `pulsar.py` (el job `Parser sync (landing)` del CI falla si divergen).
+* **CI (`ci.yml`):** ruff, pre-commit, tests en Python 3.10–3.14, sincronía del parser con la landing, y `twine check --strict` sobre el sdist y el wheel.
+* **Release:** al crear un tag `v*`, `release.yml` ejecuta los tests, construye sdist + wheel, crea el GitHub Release con los artefactos y publica el paquete en **PyPI** mediante **trusted publishing (OIDC)**, sin tokens en secrets. Requiere registrar una sola vez el publisher en PyPI (owner `jeironpro`, repositorio `pulsar`, workflow `release.yml`).
 
 ---
 
