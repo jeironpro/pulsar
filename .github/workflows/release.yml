@@ -27,23 +27,19 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Construir paquete (sdist + wheel)
         run: |
           pip install build
           python -m build
-
       - name: Subir artefactos de distribucion
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 7
-
       - name: Crear GitHub Release con artefactos
         uses: softprops/action-gh-release@v2
         with:
@@ -53,9 +49,10 @@ jobs:
   publish:
     # Publica en PyPI real mediante trusted publishing (OIDC), sin tokens.
     # Requiere configurar el publisher una sola vez en PyPI:
-    #   https://pypi.org/manage/project/pulsar-psr/settings/ -> Publishing ->
-    #   "Add a new pending publisher" -> owner: jeironpro, repository: pulsar,
-    #   workflow name: release.yml (el nombre del archivo, no el del job).
+    #   https://pypi.org/manage/account/publishing/ (a nivel de cuenta si el
+    #   proyecto aun no existe) -> "Add a new pending publisher" ->
+    #   owner: jeironpro, repository: pulsar, workflow name: release.yml
+    #   (el nombre del archivo), environment: pypi.
     name: Publicar en PyPI (trusted publishing)
     needs: [test, release]
     runs-on: ubuntu-latest
@@ -71,3 +68,40 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
+
+  verify:
+    # Comprueba tras publicar que PyPI sirve la version y que
+    # pip install pulsar-psr==<version> funciona en un venv limpio.
+    name: Verificar publicacion en PyPI
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Comprobar version publicada en PyPI
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "Version esperada: $VERSION"
+          JSON=""
+          for i in 1 2 3 4 5 6; do
+            if JSON=$(curl -fsSL "https://pypi.org/pypi/pulsar-psr/json" 2>/dev/null); then
+              break
+            fi
+            echo "Intento $i: PyPI aun no responde, reintento en 5s..."
+            sleep 5
+          done
+          [ -n "$JSON" ] || { echo "::error::PyPI no respondio tras los reintentos"; exit 1; }
+          echo "$JSON" | VERSION="$VERSION" python3 -c 'import json,sys,os; i=json.load(sys.stdin)["info"]; v=os.environ["VERSION"]; assert i["version"]==v, "version en PyPI " + i["version"] + " != " + v; print("PyPI OK:", i["name"], i["version"])'
+      - name: Instalar y probar desde PyPI
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          python3 -m venv /tmp/psr-verify
+          /tmp/psr-verify/bin/pip install --quiet "pulsar-psr==$VERSION"
+          /tmp/psr-verify/bin/psr version | grep -q "$VERSION"
+          printf '%s\n' '-> user' '    name >> Ada' '<-' > /tmp/datos.psr
+          /tmp/psr-verify/bin/psr parse -f /tmp/datos.psr | grep -q '"Ada"'
+          echo "pip install pulsar-psr==$VERSION + CLI OK"
