@@ -5,6 +5,23 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y el versionado sigue [SemVer](https://semver.org/lang/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-08-22
+
+### Añadido
+
+- `__all__` con la API pública del módulo `pulsar` (18 nombres): `from pulsar import *` ya no filtra imports de stdlib
+- Menú hamburguesa accesible en la landing (≤900px): `aria-expanded`/`aria-controls`, icono → X, cierre con `Esc` (con retorno de foco), al pulsar un enlace o al hacer clic fuera
+- Tabla comparativa accesible al teclado en móvil (`tabindex`, `role="region"`, `aria-label`)
+- Contraste WCAG AA en la landing: `--text-low` ≥ 4.5:1 en todos los fondos y no-texto (bullets del carrusel, scrollbar) ≥ 3:1
+- CI: job `Parser sync (landing)` (falla si `landing/pulsar.py` diverge de `pulsar.py`), `twine check --strict` en el job de build, y publicación en PyPI con trusted publishing (OIDC) en `release.yml`
+- README: sección de instalación desde PyPI y de desarrollo/release
+
+### Modificado
+
+- Empaquetado para PyPI: classifiers, `[project.urls]`, descripción en inglés y `MANIFEST.in` (el sdist ya no incluye los tests)
+- Responsive de la landing: nav con `space-between`, ajustes de footer/hero/playground/tabla en anchos móviles, y scrollbars con estilos del tema
+
+## [2.0.0] - 2026-08-22
 ## [2.0.0] - 2026-08-22
 
 ### Modificado — **BREAKING**
@@ -35,5 +52,6 @@ y el versionado sigue [SemVer](https://semver.org/lang/spec/v2.0.0.html).
 - Validador: reporta hijos faltantes según el schema y añade modo estricto opt-in contra atributos no declarados
 - Playground: ejemplo *Contacts* tenía un bloque sin cerrar; módulo compartido `PSRHl` omitido por `.gitignore` (`lib/`) nunca llegaba a producción
 
+[2.0.1]: https://github.com/jeironpro/pulsar/releases/tag/v2.0.1
 [2.0.0]: https://github.com/jeironpro/pulsar/releases/tag/v2.0.0
 [1.0.0]: https://github.com/jeironpro/pulsar/releases/tag/v1.0.0
