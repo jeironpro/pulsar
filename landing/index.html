@@ -200,9 +200,9 @@
 
         <div class="pg-wrap reveal">
           <div class="pg-chips" role="group" aria-label="Ejemplos precargados">
-            <button class="chip is-active" type="button" data-example="contacts">Contactos</button>
-            <button class="chip" type="button" data-example="server">Servidor</button>
-            <button class="chip chip-danger" type="button" data-example="errors">Con errores</button>
+            <button class="chip is-active" type="button" data-example="contacts" aria-pressed="true">Contactos</button>
+            <button class="chip" type="button" data-example="server" aria-pressed="false">Servidor</button>
+            <button class="chip chip-danger" type="button" data-example="errors" aria-pressed="false">Con errores</button>
           </div>
 
           <div class="pg-editor">
@@ -220,7 +220,7 @@
           </div>
 
           <div class="pg-output-grid">
-            <pre class="code-json pg-out" id="pg-out" aria-label="Salida JSON" hidden></pre>
+            <pre class="code-json pg-out" id="pg-out" role="region" aria-live="polite" aria-label="Salida JSON del parseo" hidden></pre>
             <div class="pg-error" id="pg-error" hidden>
               <strong>Error del parser</strong>
               <code id="pg-error-msg"></code>

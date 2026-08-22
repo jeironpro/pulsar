@@ -66,8 +66,11 @@
 
   $$('.chip[data-example]').forEach(chip => {
     chip.addEventListener('click', () => {
-      $$('.chip[data-example]').forEach(c => c.classList.remove('is-active'));
-      chip.classList.add('is-active');
+      $$('.chip[data-example]').forEach(c => {
+        const active = c === chip;
+        c.classList.toggle('is-active', active);
+        c.setAttribute('aria-pressed', String(active));
+      });
       setExample(chip.dataset.example);
       resetOutput();
     });
@@ -154,8 +157,8 @@ def _run(src):
 
       if (result.ok) {
         status.textContent = 'Parseado con éxito.';
+        outEl.hidden = false; // descubre la region aria-live antes de insertar el contenido
         outEl.innerHTML = hlJson(result.data);
-        outEl.hidden = false;
       } else {
         status.textContent = 'El parser encontró un error.';
         errMsg.textContent = result.error;
