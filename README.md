@@ -1,4 +1,4 @@
-# PULSAR (.psr) — Language Specification v1.0
+# PULSAR (.psr) — Especificación del formato
 
 [![CI](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml/badge.svg)](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org)
@@ -185,7 +185,7 @@ Un parser PULSAR **DEBE fallar** si:
 
 ---
 
-**PULSAR v1.0 — Spec oficial**
+**PULSAR .psr — Spec oficial**
 
 ---
 
