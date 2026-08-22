@@ -80,6 +80,7 @@ figure {
 }
 pre {
   margin: 0;
+  tab-size: 4;
 }
 code,
 kbd {
