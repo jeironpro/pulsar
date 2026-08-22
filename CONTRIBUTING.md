@@ -61,6 +61,52 @@ Si el job `Parser sync (landing)` se marca en rojo, las copias divergen: ejecuta
 
 ---
 
+## Publicar un release
+
+El release es automático y guiado por tags (el flujo completo vive en `.github/workflows/release.yml`):
+
+1. **Preparar la rama** (formato `release/X.Y.Z`):
+   - Subir `__version__` en `pulsar.py` (fuente única) y sincronizar `landing/pulsar.py` (`cp pulsar.py landing/pulsar.py`).
+   - Añadir la entrada en `CHANGELOG.md` y actualizar las referencias de versión en `README.md` y `landing/index.html`.
+   - Abrir PR y esperar CI verde.
+2. **Mergear** el PR a `main`.
+3. **Crear el tag**:
+   ```bash
+   git checkout main && git pull
+   git tag -a v2.0.1 -m "PULSAR v2.0.1"
+   git push origin v2.0.1
+   ```
+4. **Qué dispara**: `release.yml` ejecuta tests → build + GitHub Release (sdist/wheel) → publicación en PyPI con trusted publishing (OIDC, sin tokens) → verificación automática (`verify`: PyPI responde con la versión y `pip install pulsar-psr==<versión>` funciona).
+
+### Configurar el trusted publisher (solo la primera vez)
+
+En https://pypi.org/manage/account/publishing/ (a nivel de cuenta si el proyecto aún no existe) → *Add publisher* → GitHub:
+- Owner: `jeironpro`
+- Repository: `pulsar`
+- Workflow name: `release.yml` (el **nombre del archivo**, no el nombre visible del workflow)
+- Environment name: `pypi`
+- Nombre del proyecto: `pulsar-psr`
+
+Los tres valores (workflow name, environment y repo) deben coincidir **al carácter** con `release.yml`.
+
+### Si el job publish falla
+
+El error típico es `invalid-publisher` (los claims OIDC no coinciden con el publisher registrado). Verifica en PyPI que `repository`, `workflow name` y `environment name` coinciden exactamente con `release.yml`, corrige, y re-ejecuta solo el job fallido:
+
+```bash
+gh run rerun <run-id> --failed
+```
+
+**Ojo**: el re-run usa el workflow del commit original. Si el arreglo fue un cambio de *workflow*, hay que recrear el tag para que el nuevo run lo use:
+
+```bash
+git push origin :refs/tags/v2.0.1 && git tag -d v2.0.1
+gh release delete v2.0.1 --yes
+git tag -a v2.0.1 -m "PULSAR v2.0.1" && git push origin v2.0.1
+```
+
+---
+
 ## Normas Generales
 
 - Sé respetuoso y constructivo en tus comentarios.
