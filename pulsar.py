@@ -351,11 +351,20 @@ def validate_block(block: Dict[str, Any], schema: Dict[str, Any]) -> List[str]:
             else:
                 if not _type_matches(t, v):
                     errors.append(f'{k} debe ser {t} en {block["tipo"]}')
-    for i, child_sch in enumerate(schema.get('hijos', [])):
-        if i < len(block['hijos']):
-            errors.extend(validate_block(block['hijos'][i], child_sch))
-    if len(block['hijos']) > len(schema.get('hijos', [])):
+    if schema.get('estricto'):
+        for k in block['atributos']:
+            if k not in schema.get('atributos', {}):
+                errors.append(f'Atributo {k} no permitido en {block["tipo"]} (modo estricto)')
+    block_hijos = block.get('hijos', [])
+    schema_hijos = schema.get('hijos', [])
+    for i, child_sch in enumerate(schema_hijos):
+        if i < len(block_hijos):
+            errors.extend(validate_block(block_hijos[i], child_sch))
+    if len(block_hijos) > len(schema_hijos):
         errors.append(f'Bloque {block["tipo"]} tiene más hijos de los esperados')
+    if len(block_hijos) < len(schema_hijos):
+        faltantes = ', '.join(s['tipo'] for s in schema_hijos[len(block_hijos):])
+        errors.append(f'Bloque {block["tipo"]} tiene hijos faltantes: {faltantes}')
     return errors
 
 def validate_psr(data: List[Dict[str, Any]], schema: Dict[str, Any]) -> List[str]:
