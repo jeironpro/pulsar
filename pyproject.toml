@@ -27,6 +27,12 @@ classifiers = [
 [project.scripts]
 psr = "pulsar:main"
 
+[project.urls]
+Homepage = "https://github.com/jeironpro/pulsar"
+Documentation = "https://jeironpro.github.io/pulsar/"
+Repository = "https://github.com/jeironpro/pulsar"
+Changelog = "https://github.com/jeironpro/pulsar/blob/main/CHANGELOG.md"
+
 [tool.setuptools]
 py-modules = ["pulsar"]
 
