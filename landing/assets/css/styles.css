@@ -39,7 +39,21 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+/* fondo del root: evita blanco del canvas si algo recorta <html> */
+html { scroll-behavior: smooth; background: var(--bg); }
+
+/* overlay de transición entre anclas (transition.style se aplica aquí, no en <html>) */
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 120%, rgba(109, 91, 208, .25), transparent 65%),
+    var(--bg);
+  pointer-events: none;
+}
+.page-transition.is-active { display: block; }
 
 body {
   margin: 0;
@@ -1013,14 +1027,17 @@ img, svg, canvas { display: block; }
 .footer-bar {
   border-top: 1px solid var(--line);
   padding-block: 1.3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: .5rem;
-  text-align: center;
   color: var(--text-low);
   font-size: .82rem;
+}
+
+/* asimétrico: © a la izquierda, crédito a la derecha, alineado con el grid */
+.footer-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
 }
 
 /* ============ Tooltip (Floating UI) ============ */

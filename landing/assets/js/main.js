@@ -325,22 +325,37 @@
   });
 
   /* ============ Navegación por anclas con transition-style ============ */
+  /* La transición se aplica sobre un overlay fijo oscuro: recortar <html>
+     dejaba ver el canvas sin pintar (pantalla blanca). */
+  const transitionOverlay = document.createElement('div');
+  transitionOverlay.className = 'page-transition';
+  transitionOverlay.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(transitionOverlay);
+
+  let transitioning = false;
   $$('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const id = a.getAttribute('href');
-      if (id.length < 2) return;
+      if (id.length < 2 || transitioning) return;
       const target = id === '#inicio' ? document.body : $(id);
       if (!target) return;
-      if (REDUCED) return;
+      if (REDUCED) return; // el navegador salta con scroll nativo
       e.preventDefault();
-      const root = document.documentElement;
-      root.setAttribute('transition-style', 'out:wipe:left');
+      transitioning = true;
+
+      transitionOverlay.setAttribute('transition-style', 'in:wipe:left');
+      transitionOverlay.classList.add('is-active');
+
       setTimeout(() => {
         target.scrollIntoView({ behavior: 'auto', block: 'start' });
-        root.setAttribute('transition-style', 'in:wipe:right');
         history.pushState(null, '', id);
-        setTimeout(() => root.removeAttribute('transition-style'), 800);
-      }, 300);
+        transitionOverlay.setAttribute('transition-style', 'out:wipe:right');
+        setTimeout(() => {
+          transitionOverlay.classList.remove('is-active');
+          transitionOverlay.removeAttribute('transition-style');
+          transitioning = false;
+        }, 700);
+      }, 320);
     });
   });
 
