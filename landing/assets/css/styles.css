@@ -275,10 +275,60 @@ canvas {
   font-size: 0.92rem;
   font-weight: 500;
   color: var(--text-mid);
-  transition: color 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s;
 }
 .nav-links a:hover {
   color: var(--text-hi);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav-toggle {
+  display: none; /* visible solo en movil (<=900px) */
+  width: 42px;
+  height: 42px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.nav-toggle:hover {
+  border-color: var(--gold);
+}
+.nav-toggle[aria-expanded='true'] {
+  border-color: var(--gold);
+  background: var(--surface);
+}
+.nav-toggle-bar {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-hi);
+  transition:
+    transform 0.25s,
+    opacity 0.25s;
+}
+.nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 .nav-gh {
@@ -1568,11 +1618,36 @@ html.js .reveal.is-visible {
 
 @media (max-width: 900px) {
   .nav-inner {
-    /* sin .nav-links (ocultos), reparte marca y boton de GitHub a los extremos */
+    /* marca a la izquierda, acciones (toggle + GitHub) a la derecha */
     justify-content: space-between;
   }
+  .nav-toggle {
+    display: inline-flex;
+  }
   .nav-links {
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    flex-direction: column;
+    gap: 0;
+    margin-left: 0;
+    background: rgba(6, 7, 15, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+  }
+  .nav-links[hidden] {
+    /* el atributo hidden solo aplica en movil; en escritorio .nav-links
+       (flex) gana sobre el hidden de la UA */
     display: none;
+  }
+  .nav-links a {
+    padding: 0.85rem var(--gutter);
+    font-size: 0.95rem;
+  }
+  .nav-links a:hover {
+    background: var(--surface);
   }
   .formato-grid {
     grid-template-columns: 1fr;
