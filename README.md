@@ -1,5 +1,9 @@
 # PULSAR (.psr) — Language Specification v1.0
 
+[![CI](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml/badge.svg)](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 > **Estado:** Draft estable  
 > **Propósito:** Formato de datos estructurados, legible por humanos, jerárquico y extensible, diseñado desde cero (no derivado de JSON/YAML/TOML).  
 > **Contribuciones:** leer [CONTRIBUTING](CONTRIBUTING.md).  
