@@ -19,6 +19,18 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
 
+  parser-sync:
+    name: Parser sync (landing)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar que landing/pulsar.py es identico a pulsar.py
+        run: |
+          if ! diff -q pulsar.py landing/pulsar.py; then
+            echo "::error::landing/pulsar.py no es identico a pulsar.py. Sincronizalo con: cp pulsar.py landing/pulsar.py"
+            exit 1
+          fi
+
   pre-commit:
     name: Pre-commit (hooks)
     runs-on: ubuntu-latest
