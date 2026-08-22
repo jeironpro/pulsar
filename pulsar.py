@@ -7,6 +7,8 @@ import sys
 import argparse
 from typing import List, Dict, Any, Optional, Tuple
 
+__version__ = '1.0.0'
+
 # ----------------------------
 # Excepciones
 # ----------------------------
@@ -410,6 +412,8 @@ def main():
                '  pulsar validate -f datos.psr -s schema.json\n'
                '  pulsar version',
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-V', '--version', action='version',
+                        version=f'PULSAR CLI v{__version__}')
     sub = parser.add_subparsers(dest='command', required=True)
 
     p_parse = sub.add_parser('parse', help='Parsear .psr y mostrar JSON',
@@ -433,12 +437,12 @@ def main():
 
     try:
         if args.command == 'version':
-            print('PULSAR CLI v1.0')
+            print(f'PULSAR CLI v{__version__}')
             return
 
         if args.command == 'parse':
             ast = load_psr(args.file)
-            print(json.dumps(build_document(ast), indent=4))
+            print(json.dumps(build_document(ast), indent=4, ensure_ascii=False))
 
         elif args.command == 'dump':
             ast = load_psr(args.file)
@@ -463,7 +467,7 @@ def main():
             else:
                 print('Archivo válido ✅')
 
-    except (PSRLexError, PSRParseError, FileNotFoundError,
+    except (PSRLexError, PSRParseError, OSError,
             json.JSONDecodeError, ValueError) as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
