@@ -1540,6 +1540,10 @@ html.js .reveal.is-visible {
 }
 
 @media (max-width: 900px) {
+  .nav-inner {
+    /* sin .nav-links (ocultos), reparte marca y boton de GitHub a los extremos */
+    justify-content: space-between;
+  }
   .nav-links {
     display: none;
   }
