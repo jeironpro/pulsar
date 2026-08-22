@@ -13,7 +13,7 @@
 
   --text-hi: #eef0ff;
   --text-mid: #a9aecf;
-  --text-low: #70759f;
+  --text-low: #8f93b8; /* ≥ 4.5:1 sobre todos los fondos del tema (AA) */
 
   --gold: #f5b04a;
   --gold-strong: #ffc46a;
@@ -1068,6 +1068,13 @@ html.js .reveal.is-visible {
   }
   html.js .reveal { opacity: 1; transform: none; }
   .scroll-cue svg, .star-core, .pulse-rings .ring { animation: none !important; }
+}
+
+/* ============ Impresión ============ */
+@media print {
+  /* los reveals parten con opacity: 0 cuando JS está activo; al imprimir
+     sin scroll nunca quedarían invisibles */
+  html.js .reveal { opacity: 1; transform: none; }
 }
 
 /* ============ Responsive ============ */

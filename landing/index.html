@@ -543,11 +543,8 @@ OK</pre>
 
   <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
 
-  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.13/dist/floating-ui.dom.min.js"></script>
+  <!-- Las librerías CDN (gsap, anime.js, Swiper, Floating UI) se cargan bajo demanda
+       desde main.js (script clásico inyectado) cuando su sección entra en el viewport. -->
   <script defer src="./assets/js/lib/highlight.js"></script>
   <script defer src="./assets/js/main.js"></script>
   <script defer src="./assets/js/playground.js"></script>

@@ -10,6 +10,60 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
+  /* ============ Carga diferida de librerías CDN ============
+     gsap, anime.js, Swiper y Floating UI se descargan solo cuando la
+     sección que los usa entra en el viewport (IntersectionObserver).
+     Se inyectan como <script> clásico en lugar de import(): con import()
+     los UMD se evaluarían como módulo ES, donde `this` de nivel superior
+     es undefined, lo que rompe anime.js (n.anime = ...). */
+  const CDN = {
+    gsap: 'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js',
+    scrollTrigger: 'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js',
+    anime: 'https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js',
+    swiper: 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+    floatingCore: 'https://cdn.jsdelivr.net/npm/@floating-ui/core@1.6.9/dist/floating-ui.core.umd.min.js',
+    floating: 'https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.13/dist/floating-ui.dom.umd.min.js'
+  };
+
+  const _scripts = new Map();
+  const loadScript = url => {
+    if (!_scripts.has(url)) {
+      _scripts.set(url, new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.async = false; // ejecución en orden: respeta dependencias (gsap → ScrollTrigger, core → dom)
+        s.onload = () => res();
+        s.onerror = () => { _scripts.delete(url); rej(new Error('Fallo al cargar ' + url)); };
+        document.head.appendChild(s);
+      }));
+    }
+    return _scripts.get(url);
+  };
+
+  const loadGsap = () =>
+    loadScript(CDN.gsap)
+      .then(() => loadScript(CDN.scrollTrigger))
+      .then(() => {
+        const { gsap, ScrollTrigger } = window;
+        gsap.registerPlugin(ScrollTrigger);
+        return gsap;
+      });
+  const loadAnime = () => loadScript(CDN.anime).then(() => window.anime);
+  const loadSwiper = () => loadScript(CDN.swiper).then(() => window.Swiper);
+  const loadFloating = () =>
+    loadScript(CDN.floatingCore)
+      .then(() => loadScript(CDN.floating))
+      .then(() => window.FloatingUIDOM);
+
+  const onceVisible = (el, cb, rootMargin = '0px 0px -8% 0px') => {
+    if (!el) return;
+    if (!('IntersectionObserver' in window)) { cb(); return; }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { io.disconnect(); cb(); }
+    }, { rootMargin, threshold: 0.05 });
+    io.observe(el);
+  };
+
   /* El resaltado de sintaxis vive en assets/js/lib/highlight.js (compartido
      con playground.js para evitar duplicación). */
 
@@ -71,41 +125,43 @@
   onScrollNav();
   window.addEventListener('scroll', onScrollNav, { passive: true });
 
-  /* ============ Parallax (GSAP ScrollTrigger + mouse) ============ */
-  const hasGsap = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
-  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
-
+  /* ============ Parallax (GSAP ScrollTrigger + mouse, carga on-demand) ============ */
   const heroLayers = $$('.hero [data-depth]');
-  if (hasGsap && !REDUCED && heroLayers.length) {
-    heroLayers.forEach(layer => {
-      const depth = parseFloat(layer.dataset.depth) || .3;
-      gsap.to(layer, {
-        yPercent: depth * -46,
-        ease: 'none',
-        scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }
-      });
-    });
-    gsap.to('.hero-inner', {
-      opacity: .12,
-      yPercent: -8,
-      ease: 'none',
-      scrollTrigger: { trigger: '.hero', start: '40% top', end: 'bottom top', scrub: true }
-    });
-
-    // parallax de ratón (solo dispositivos con puntero fino)
-    if (window.matchMedia('(pointer: fine)').matches) {
-      const setters = heroLayers.map(l =>
-        gsap.quickTo(l, 'x', { duration: .9, ease: 'power3.out' }));
-      const innerX = gsap.quickTo('.hero-inner', 'x', { duration: 1.1, ease: 'power3.out' });
-      $('.hero').addEventListener('mousemove', e => {
-        const nx = e.clientX / innerWidth - .5;
-        heroLayers.forEach((l, i) => {
-          const d = parseFloat(l.dataset.depth) || .3;
-          setters[i](nx * d * 60);
+  if (!REDUCED && heroLayers.length) {
+    onceVisible($('.hero'), () => {
+      loadGsap().then(gsap => {
+        if (REDUCED) return;
+        heroLayers.forEach(layer => {
+          const depth = parseFloat(layer.dataset.depth) || .3;
+          gsap.to(layer, {
+            yPercent: depth * -46,
+            ease: 'none',
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }
+          });
         });
-        innerX(nx * -14);
-      }, { passive: true });
-    }
+        gsap.to('.hero-inner', {
+          opacity: .12,
+          yPercent: -8,
+          ease: 'none',
+          scrollTrigger: { trigger: '.hero', start: '40% top', end: 'bottom top', scrub: true }
+        });
+
+        // parallax de ratón (solo dispositivos con puntero fino)
+        if (window.matchMedia('(pointer: fine)').matches) {
+          const setters = heroLayers.map(l =>
+            gsap.quickTo(l, 'x', { duration: .9, ease: 'power3.out' }));
+          const innerX = gsap.quickTo('.hero-inner', 'x', { duration: 1.1, ease: 'power3.out' });
+          $('.hero').addEventListener('mousemove', e => {
+            const nx = e.clientX / innerWidth - .5;
+            heroLayers.forEach((l, i) => {
+              const d = parseFloat(l.dataset.depth) || .3;
+              setters[i](nx * d * 60);
+            });
+            innerX(nx * -14);
+          }, { passive: true });
+        }
+      }).catch(() => {});
+    });
   }
 
   /* ============ Reveals ============ */
@@ -125,15 +181,19 @@
     const prefix = el.dataset.prefix || '';
     const suffix = el.dataset.suffix || '';
     const set = v => { el.textContent = prefix + v + suffix; };
-    if (REDUCED || typeof anime === 'undefined') { set(target); return; }
+    if (REDUCED) { set(target); return; }
     const state = { v: 0 };
     new IntersectionObserver(([e], io) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      anime({
-        targets: state, v: target, round: 1, easing: 'easeOutExpo', duration: 1800,
-        update: () => set(state.v)
-      });
+      loadAnime()
+        .then(anime => {
+          anime({
+            targets: state, v: target, round: 1, easing: 'easeOutExpo', duration: 1800,
+            update: () => set(state.v)
+          });
+        })
+        .catch(() => set(target));
     }, { threshold: .5 }).observe(el);
   });
 
@@ -224,29 +284,32 @@
       }
     };
 
-    if (REDUCED || typeof anime === 'undefined') renderStatic();
-    else runTyping();
+    if (REDUCED) renderStatic();
+    else onceVisible(termBody, () => loadAnime().then(runTyping).catch(renderStatic));
   }
 
   /* ============ Tooltips (Floating UI) ============ */
   const tooltipEl = $('#tooltip');
   const tipApi = { showTip: null, hideTip: null };
-  if (tooltipEl && typeof FloatingUIDOM !== 'undefined') {
+  if (tooltipEl) {
     let cleanupAuto = null;
 
     const showTip = (ref, content) => {
       if (!ref || !content) return;
       tooltipEl.innerHTML = content;
       tooltipEl.hidden = false;
-      if (cleanupAuto) cleanupAuto();
-      cleanupAuto = FloatingUIDOM.autoUpdate(ref, tooltipEl, () => {
-        FloatingUIDOM.computePosition(ref, tooltipEl, {
-          placement: 'top',
-          middleware: [FloatingUIDOM.offset(8), FloatingUIDOM.flip(), FloatingUIDOM.shift({ padding: 8 })]
-        }).then(({ x, y }) => {
-          Object.assign(tooltipEl.style, { left: `${x}px`, top: `${y}px` });
+      loadFloating().then(FloatingUIDOM => {
+        if (tooltipEl.hidden) return; // se cerró mientras se cargaba
+        if (cleanupAuto) cleanupAuto();
+        cleanupAuto = FloatingUIDOM.autoUpdate(ref, tooltipEl, () => {
+          FloatingUIDOM.computePosition(ref, tooltipEl, {
+            placement: 'top',
+            middleware: [FloatingUIDOM.offset(8), FloatingUIDOM.flip(), FloatingUIDOM.shift({ padding: 8 })]
+          }).then(({ x, y }) => {
+            Object.assign(tooltipEl.style, { left: `${x}px`, top: `${y}px` });
+          });
         });
-      });
+      }).catch(() => { tooltipEl.hidden = true; });
     };
 
     const hideTip = () => {
@@ -327,24 +390,29 @@
   /* Navegación por anclas: smooth scroll nativo (html { scroll-behavior }).
      Los reveals on-scroll aportan el movimiento; sin overlays ni wipes. */
 
-  /* ============ Swiper: casos de uso ============ */
-  if (typeof Swiper !== 'undefined') {
-    new Swiper('.casos-swiper', {
-      slidesPerView: 1.08,
-      spaceBetween: 18,
-      grabCursor: true,
-      keyboard: { enabled: true },
-      a11y: { enabled: true },
-      breakpoints: {
-        700: { slidesPerView: 1.7 },
-        1024: { slidesPerView: 2.4 },
-        1280: { slidesPerView: 3 }
-      },
-      navigation: {
-        nextEl: '.sw-next',
-        prevEl: '.sw-prev'
-      },
-      pagination: { el: '.casos-swiper .swiper-pagination', clickable: true }
+  /* ============ Swiper: casos de uso (carga al entrar en viewport) ============ */
+  const casosEl = $('.casos-swiper');
+  if (casosEl) {
+    onceVisible(casosEl, () => {
+      loadSwiper().then(Swiper => {
+        new Swiper('.casos-swiper', {
+          slidesPerView: 1.08,
+          spaceBetween: 18,
+          grabCursor: true,
+          keyboard: { enabled: true },
+          a11y: { enabled: true },
+          breakpoints: {
+            700: { slidesPerView: 1.7 },
+            1024: { slidesPerView: 2.4 },
+            1280: { slidesPerView: 3 }
+          },
+          navigation: {
+            nextEl: '.sw-next',
+            prevEl: '.sw-prev'
+          },
+          pagination: { el: '.casos-swiper .swiper-pagination', clickable: true }
+        });
+      }).catch(() => {});
     });
   }
 })();

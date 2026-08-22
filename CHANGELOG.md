@@ -10,10 +10,12 @@ y el versionado sigue [SemVer](https://semver.org/lang/spec/v2.0.0.html).
 ### Modificado — **BREAKING** (será `2.0.0`)
 
 - Contrato de datos en inglés: `tipo/atributos/hijos` → `type/attributes/children`
+- Validador: los hijos se emparejan por `type` en lugar de por posición; se exige al menos uno por tipo declarado y se rechazan tipos de hijo no declarados
 - Claves de esquema en inglés: `obligatorio/items_tipo/estricto` → `required/items_type/strict`
 - Mensajes del parser, validador y CLI en inglés (`Line 4: unclosed block(s)`, `Dump file created at:`, …)
 - Versión única centralizada en `pulsar.__version__`; `pyproject.toml` la lee dinámicamente
 - Normalización de estilo con ruff (lint + format) y validación de assets locales referenciados por la landing en CI
+- README alineado con la implementación real: EBNF sin secciones `_meta`/`data` y con objetos/comentarios/negativos, tokens reales del lexer, `kind` `object` en `ValueNode` y sección CLI con `argparse`
 
 ## [1.0.0] - 2026-08-22
 
