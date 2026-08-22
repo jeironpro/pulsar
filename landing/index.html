@@ -70,31 +70,44 @@
           </svg>
           PULSAR
         </a>
-        <nav class="nav-links" aria-label="Secciones">
+        <nav class="nav-links" aria-label="Secciones" hidden>
           <a href="#formato">El formato</a>
           <a href="#playground">Playground</a>
           <a href="#features">Características</a>
           <a href="#cli">CLI</a>
           <a href="#instalacion">Instalación</a>
         </nav>
-        <a
-          class="btn btn-ghost btn-sm nav-gh"
-          href="https://github.com/jeironpro/pulsar"
-          target="_blank"
-          rel="noopener"
-        >
-          GitHub
-          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-            <path
-              d="M7 17L17 7M9 7h8v8"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </a>
+        <div class="nav-actions">
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="nav-links"
+            aria-label="Abrir menú de navegación"
+          >
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+          </button>
+          <a
+            class="btn btn-ghost btn-sm nav-gh"
+            href="https://github.com/jeironpro/pulsar"
+            target="_blank"
+            rel="noopener"
+          >
+            GitHub
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path
+                d="M7 17L17 7M9 7h8v8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
       </div>
     </header>
 

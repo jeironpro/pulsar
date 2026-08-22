@@ -162,6 +162,45 @@
   onScrollNav();
   window.addEventListener('scroll', onScrollNav, { passive: true });
 
+  /* ============ Menu hamburguesa (movil, <=900px) ============ */
+  const navToggle = $('.nav-toggle');
+  const navLinks = $('.nav-links');
+  if (navToggle && navLinks) {
+    // en escritorio los enlaces siempre visibles aunque quede hidden=true
+    // tras redimensionar desde movil (allí la regla .nav-links[hidden]
+    // solo existe dentro del media query <=900px)
+    if (window.innerWidth > 900) navLinks.hidden = false;
+
+    const setMenu = (open, focusToggle = false) => {
+      navLinks.hidden = !open;
+      navToggle.setAttribute('aria-expanded', String(open));
+      navToggle.setAttribute(
+        'aria-label',
+        open ? 'Cerrar menú de navegación' : 'Abrir menú de navegación',
+      );
+      if (focusToggle) navToggle.focus();
+    };
+
+    navToggle.addEventListener('click', () => setMenu(navLinks.hidden));
+    // al pulsar un enlace se cierra (el ancla navega y el panel sobra)
+    navLinks.addEventListener('click', (e) => {
+      if (e.target.closest('a')) setMenu(false);
+    });
+    // clic fuera del menu lo cierra
+    document.addEventListener('click', (e) => {
+      if (
+        !navLinks.hidden &&
+        !navToggle.contains(e.target) &&
+        !navLinks.contains(e.target)
+      )
+        setMenu(false);
+    });
+    // Escape cierra y devuelve el foco al boton
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !navLinks.hidden) setMenu(false, true);
+    });
+  }
+
   /* ============ Parallax (GSAP ScrollTrigger + mouse, carga on-demand) ============ */
   const heroLayers = $$('.hero [data-depth]');
   if (!REDUCED && heroLayers.length) {
