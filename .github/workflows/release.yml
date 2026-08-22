@@ -4,6 +4,9 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Tests previos al release
@@ -34,8 +37,36 @@ jobs:
           pip install build
           python -m build
 
+      - name: Subir artefactos de distribucion
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
       - name: Crear GitHub Release con artefactos
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
+
+  publish:
+    # Publica en PyPI real mediante trusted publishing (OIDC), sin tokens.
+    # Requiere configurar el publisher una sola vez en PyPI:
+    #   https://pypi.org/manage/project/pulsar-psr/settings/ -> Publishing ->
+    #   "Add a new pending publisher" -> owner: jeironpro, repository: pulsar,
+    #   workflow name: release.yml (el nombre del archivo, no el del job).
+    name: Publicar en PyPI (trusted publishing)
+    needs: [test, release]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Publicar sdist y wheel en PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
