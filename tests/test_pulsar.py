@@ -472,6 +472,45 @@ class TestValidator(unittest.TestCase):
         errs = validate_psr(data, schema)
         self.assertEqual(errs, [])
 
+    def test_missing_children_reported(self):
+        data = [{'tipo': 'a', 'atributos': {}, 'hijos': []}]
+        schema = {'tipo': 'a', 'atributos': {}, 'hijos': [
+            {'tipo': 'b', 'atributos': {}, 'hijos': []},
+            {'tipo': 'c', 'atributos': {}, 'hijos': []}
+        ]}
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
+        self.assertIn('faltantes', errs[0])
+        self.assertIn('b, c', errs[0])
+
+    def test_partial_missing_children(self):
+        data = [{'tipo': 'a', 'atributos': {}, 'hijos': [
+            {'tipo': 'b', 'atributos': {}, 'hijos': []}
+        ]}]
+        schema = {'tipo': 'a', 'atributos': {}, 'hijos': [
+            {'tipo': 'b', 'atributos': {}, 'hijos': []},
+            {'tipo': 'c', 'atributos': {}, 'hijos': []}
+        ]}
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
+        self.assertIn('c', errs[0])
+
+    def test_lenient_allows_extra_attrs(self):
+        data = [{'tipo': 'x', 'atributos': {'extra': 1}, 'hijos': []}]
+        schema = {'tipo': 'x', 'atributos': {}, 'hijos': []}
+        errs = validate_psr(data, schema)
+        self.assertEqual(errs, [])
+
+    def test_strict_rejects_extra_attrs(self):
+        data = [{'tipo': 'x', 'atributos': {'extra': 1, 'ok': 2}, 'hijos': []}]
+        schema = {'tipo': 'x', 'estricto': True,
+                  'atributos': {'ok': {'tipo': 'int'}}, 'hijos': []}
+        errs = validate_psr(data, schema)
+        self.assertEqual(len(errs), 1)
+        self.assertIn('no permitido', errs[0])
+        self.assertIn('extra', errs[0])
+        self.assertIn('estricto', errs[0])
+
 
 class TestEdgeCases(unittest.TestCase):
 
