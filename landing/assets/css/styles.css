@@ -35,6 +35,7 @@
 
   --container: 1140px;
   --section-pad: clamp(4.5rem, 9vw, 8rem);
+  --gutter: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -100,7 +101,7 @@ img, svg, canvas { display: block; }
 .container-wide {
   max-width: var(--container);
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  padding-inline: var(--gutter);
 }
 .container-narrow { max-width: 860px; }
 .container-wide { max-width: 1280px; }
@@ -157,7 +158,7 @@ img, svg, canvas { display: block; }
 .nav-inner {
   max-width: var(--container);
   margin-inline: auto;
-  padding: .9rem clamp(1.25rem, 4vw, 2.5rem);
+  padding: .9rem var(--gutter);
   display: flex;
   align-items: center;
   gap: 2rem;
@@ -309,7 +310,7 @@ img, svg, canvas { display: block; }
   width: 100%;
   max-width: var(--container);
   margin-inline: auto;
-  padding: 8rem clamp(1.25rem, 4vw, 2.5rem) 7rem;
+  padding: 8rem var(--gutter) 7rem;
   will-change: transform;
 }
 

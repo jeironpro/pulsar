@@ -72,11 +72,11 @@
   window.addEventListener('scroll', onScrollNav, { passive: true });
 
   /* ============ Parallax (GSAP ScrollTrigger + mouse) ============ */
-  const hasGsap = typeof gsap !== 'undefined';
-  if (hasGsap && typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
+  const hasGsap = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
+  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
 
   const heroLayers = $$('.hero [data-depth]');
-  if (hasGsap && !REDUCED && heroLayers.length && typeof ScrollTrigger !== 'undefined') {
+  if (hasGsap && !REDUCED && heroLayers.length) {
     heroLayers.forEach(layer => {
       const depth = parseFloat(layer.dataset.depth) || .3;
       gsap.to(layer, {

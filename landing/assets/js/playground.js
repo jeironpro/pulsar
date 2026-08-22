@@ -5,6 +5,7 @@
   'use strict';
 
   const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
   const input = $('#psr-input');
   const runBtn = $('#pg-run');
@@ -63,9 +64,9 @@
   };
   setExample('contacts');
 
-  document.querySelectorAll('.chip[data-example]').forEach(chip => {
+  $$('.chip[data-example]').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.chip[data-example]').forEach(c => c.classList.remove('is-active'));
+      $$('.chip[data-example]').forEach(c => c.classList.remove('is-active'));
       chip.classList.add('is-active');
       setExample(chip.dataset.example);
       resetOutput();
