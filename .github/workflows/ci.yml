@@ -47,6 +47,14 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install build
+      - name: Verificar assets locales referenciados por la landing
+        run: |
+          cd landing
+          missing=0
+          for ref in $(grep -oE '\./assets/[A-Za-z0-9_./-]+' index.html); do
+            if [ ! -f "$ref" ]; then echo "FALTA: $ref"; missing=1; fi
+          done
+          exit $missing
       - run: python -m build
       - uses: actions/upload-artifact@v4
         with:
