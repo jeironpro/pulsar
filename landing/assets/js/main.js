@@ -324,25 +324,8 @@
     });
   });
 
-  /* ============ Navegación por anclas con transition-style ============ */
-  $$('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const id = a.getAttribute('href');
-      if (id.length < 2) return;
-      const target = id === '#inicio' ? document.body : $(id);
-      if (!target) return;
-      if (REDUCED) return;
-      e.preventDefault();
-      const root = document.documentElement;
-      root.setAttribute('transition-style', 'out:wipe:left');
-      setTimeout(() => {
-        target.scrollIntoView({ behavior: 'auto', block: 'start' });
-        root.setAttribute('transition-style', 'in:wipe:right');
-        history.pushState(null, '', id);
-        setTimeout(() => root.removeAttribute('transition-style'), 800);
-      }, 300);
-    });
-  });
+  /* Navegación por anclas: smooth scroll nativo (html { scroll-behavior }).
+     Los reveals on-scroll aportan el movimiento; sin overlays ni wipes. */
 
   /* ============ Swiper: casos de uso ============ */
   if (typeof Swiper !== 'undefined') {
