@@ -11,7 +11,7 @@
   <meta property="og:description" content="Formato abierto de datos estructurados con parser Python, CLI y validador de esquemas. Pruébalo en el navegador con el parser real.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://jeironpro.github.io/pulsar/">
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/favicon.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,14 +139,14 @@
           <div class="formato-demo reveal">
             <figure class="code-card">
               <figcaption><span class="dot"></span>datos.psr</figcaption>
-<pre class="code-psr" data-lang="psr">-> usuario
-    nombre >> "Ada Lovelace"
-    edad >> 36
-    lenguajes >> python | matematicas
+<pre class="code-psr" data-lang="psr">-> user
+    name >> "Ada Lovelace"
+    age >> 36
+    languages >> python | maths
     :: pionera de la computación
-    -> contacto
+    -> contact
         email >> ada@analytical.engine
-        ciudad >> Londres
+        city >> London
     <-
 <-</pre>
             </figure>
@@ -157,20 +157,20 @@
               <figcaption><span class="dot dot-teal"></span>salida JSON</figcaption>
 <pre class="code-json" data-lang="json">[
   {
-    "tipo": "usuario",
-    "atributos": {
-      "nombre": "Ada Lovelace",
-      "edad": 36,
-      "lenguajes": ["python", "matematicas"]
+    "type": "user",
+    "attributes": {
+      "name": "Ada Lovelace",
+      "age": 36,
+      "languages": ["python", "maths"]
     },
-    "hijos": [
+    "children": [
       {
-        "tipo": "contacto",
-        "atributos": {
+        "type": "contact",
+        "attributes": {
           "email": "ada@analytical.engine",
-          "ciudad": "Londres"
+          "city": "London"
         },
-        "hijos": []
+        "children": []
       }
     ]
   }
@@ -201,9 +201,9 @@
 
         <div class="pg-wrap reveal">
           <div class="pg-chips" role="group" aria-label="Ejemplos precargados">
-            <button class="chip is-active" type="button" data-example="contactos">Contactos</button>
-            <button class="chip" type="button" data-example="servidor">Servidor</button>
-            <button class="chip chip-danger" type="button" data-example="errores">Con errores</button>
+            <button class="chip is-active" type="button" data-example="contacts">Contactos</button>
+            <button class="chip" type="button" data-example="server">Servidor</button>
+            <button class="chip chip-danger" type="button" data-example="errors">Con errores</button>
           </div>
 
           <div class="pg-editor">
@@ -547,6 +547,7 @@ OK</pre>
   <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.13/dist/floating-ui.dom.min.js"></script>
+  <script defer src="./assets/js/lib/highlight.js"></script>
   <script defer src="./assets/js/main.js"></script>
   <script defer src="./assets/js/playground.js"></script>
 </body>

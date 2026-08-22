@@ -91,7 +91,7 @@ class TestLexer(unittest.TestCase):
     def test_round_trip_multiline_blank_lines(self):
         original = "-> x\n    bio >> <<\nline1\n\nline3\n>>\n<-\n"
         data = build_document(parse(lex_psr(original)))
-        self.assertEqual(data[0]["atributos"]["bio"], "line1\n\nline3")
+        self.assertEqual(data[0]["attributes"]["bio"], "line1\n\nline3")
         text = dump_psr(data)
         data2 = build_document(parse(lex_psr(text)))
         self.assertEqual(data, data2)
@@ -183,46 +183,46 @@ class TestBuilder(unittest.TestCase):
     def test_simple_document(self):
         ast = parse(lex_psr("-> user\n    name >> Juan\n<-\n"))
         doc = build_document(ast)
-        self.assertEqual(doc[0]["tipo"], "user")
-        self.assertEqual(doc[0]["atributos"]["name"], "Juan")
+        self.assertEqual(doc[0]["type"], "user")
+        self.assertEqual(doc[0]["attributes"]["name"], "Juan")
 
     def test_int_value(self):
         ast = parse(lex_psr("-> x\n    n >> 42\n<-\n"))
         doc = build_document(ast)
-        self.assertIsInstance(doc[0]["atributos"]["n"], int)
-        self.assertEqual(doc[0]["atributos"]["n"], 42)
+        self.assertIsInstance(doc[0]["attributes"]["n"], int)
+        self.assertEqual(doc[0]["attributes"]["n"], 42)
 
     def test_float_value(self):
         ast = parse(lex_psr("-> x\n    n >> 3.14\n<-\n"))
         doc = build_document(ast)
-        self.assertIsInstance(doc[0]["atributos"]["n"], float)
-        self.assertEqual(doc[0]["atributos"]["n"], 3.14)
+        self.assertIsInstance(doc[0]["attributes"]["n"], float)
+        self.assertEqual(doc[0]["attributes"]["n"], 3.14)
 
     def test_bool_true(self):
         ast = parse(lex_psr("-> x\n    flag >> true\n<-\n"))
         doc = build_document(ast)
-        self.assertIsInstance(doc[0]["atributos"]["flag"], bool)
-        self.assertTrue(doc[0]["atributos"]["flag"])
+        self.assertIsInstance(doc[0]["attributes"]["flag"], bool)
+        self.assertTrue(doc[0]["attributes"]["flag"])
 
     def test_bool_false(self):
         ast = parse(lex_psr("-> x\n    flag >> false\n<-\n"))
         doc = build_document(ast)
-        self.assertFalse(doc[0]["atributos"]["flag"])
+        self.assertFalse(doc[0]["attributes"]["flag"])
 
     def test_list_value(self):
         ast = parse(lex_psr("-> x\n    items >> a | b | c\n<-\n"))
         doc = build_document(ast)
-        self.assertEqual(doc[0]["atributos"]["items"], ["a", "b", "c"])
+        self.assertEqual(doc[0]["attributes"]["items"], ["a", "b", "c"])
 
     def test_quoted_string(self):
         ast = parse(lex_psr('-> x\n    name >> "Juan Perez"\n<-\n'))
         doc = build_document(ast)
-        self.assertEqual(doc[0]["atributos"]["name"], "Juan Perez")
+        self.assertEqual(doc[0]["attributes"]["name"], "Juan Perez")
 
     def test_object_value(self):
         ast = parse(lex_psr("-> x\n    m >> { city >> Madrid | country >> Spain }\n<-\n"))
         doc = build_document(ast)
-        obj = doc[0]["atributos"]["m"]
+        obj = doc[0]["attributes"]["m"]
         self.assertIsInstance(obj, dict)
         self.assertEqual(obj["city"], "Madrid")
         self.assertEqual(obj["country"], "Spain")
@@ -230,13 +230,13 @@ class TestBuilder(unittest.TestCase):
     def test_multiline_value(self):
         ast = parse(lex_psr("-> x\n    bio >> <<\nline1\nline2\n>>\n<-\n"))
         doc = build_document(ast)
-        self.assertEqual(doc[0]["atributos"]["bio"], "line1\nline2")
+        self.assertEqual(doc[0]["attributes"]["bio"], "line1\nline2")
 
     def test_nested_build(self):
         ast = parse(lex_psr("-> a\n    -> b\n        x >> 1\n    <-\n<-\n"))
         doc = build_document(ast)
-        self.assertEqual(doc[0]["hijos"][0]["tipo"], "b")
-        self.assertEqual(doc[0]["hijos"][0]["atributos"]["x"], 1)
+        self.assertEqual(doc[0]["children"][0]["type"], "b")
+        self.assertEqual(doc[0]["children"][0]["attributes"]["x"], 1)
 
     def test_duplicate_key_error(self):
         ast = parse(lex_psr("-> a\n    x >> 1\n    x >> 2\n<-\n"))
@@ -246,39 +246,39 @@ class TestBuilder(unittest.TestCase):
 
 class TestSerializer(unittest.TestCase):
     def test_serialize_basic(self):
-        data = [{"tipo": "user", "atributos": {"name": "Juan"}, "hijos": []}]
+        data = [{"type": "user", "attributes": {"name": "Juan"}, "children": []}]
         text = dump_psr(data)
         self.assertIn("-> user", text)
         self.assertIn("name >> Juan", text)
         self.assertIn("<-", text)
 
     def test_serialize_int(self):
-        data = [{"tipo": "x", "atributos": {"n": 42}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"n": 42}, "children": []}]
         text = dump_psr(data)
         self.assertIn("n >> 42", text)
 
     def test_serialize_bool(self):
-        data = [{"tipo": "x", "atributos": {"a": True, "b": False}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"a": True, "b": False}, "children": []}]
         text = dump_psr(data)
         self.assertIn("a >> true", text)
         self.assertIn("b >> false", text)
 
     def test_serialize_list(self):
-        data = [{"tipo": "x", "atributos": {"items": ["a", "b", "c"]}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"items": ["a", "b", "c"]}, "children": []}]
         text = dump_psr(data)
         self.assertIn("a | b | c", text)
 
     def test_serialize_object(self):
-        data = [{"tipo": "x", "atributos": {"m": {"city": "Madrid"}}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"m": {"city": "Madrid"}}, "children": []}]
         text = dump_psr(data)
         self.assertIn("{ city >> Madrid }", text)
 
     def test_serialize_nested(self):
         data = [
             {
-                "tipo": "a",
-                "atributos": {},
-                "hijos": [{"tipo": "b", "atributos": {"x": 1}, "hijos": []}],
+                "type": "a",
+                "attributes": {},
+                "children": [{"type": "b", "attributes": {"x": 1}, "children": []}],
             }
         ]
         text = dump_psr(data)
@@ -339,59 +339,59 @@ class TestSerializer(unittest.TestCase):
     def test_round_trip_numeric_string(self):
         original = '-> x\n    a >> "42"\n    b >> "3.14"\n    c >> "-7"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["a"], "42")
-        self.assertEqual(data[0]["atributos"]["b"], "3.14")
-        self.assertEqual(data[0]["atributos"]["c"], "-7")
+        self.assertEqual(data[0]["attributes"]["a"], "42")
+        self.assertEqual(data[0]["attributes"]["b"], "3.14")
+        self.assertEqual(data[0]["attributes"]["c"], "-7")
         self.assertEqual(data, data2)
 
     def test_round_trip_bool_string(self):
         original = '-> x\n    a >> "true"\n    b >> "False"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["a"], "true")
-        self.assertEqual(data[0]["atributos"]["b"], "False")
+        self.assertEqual(data[0]["attributes"]["a"], "true")
+        self.assertEqual(data[0]["attributes"]["b"], "False")
         self.assertEqual(data, data2)
 
     def test_round_trip_pipe_in_string(self):
         original = '-> x\n    cmd >> "a | b | c"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["cmd"], "a | b | c")
+        self.assertEqual(data[0]["attributes"]["cmd"], "a | b | c")
         self.assertEqual(data, data2)
 
     def test_round_trip_braces_in_string(self):
         original = '-> x\n    tpl >> "{ x >> 1 }"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["tpl"], "{ x >> 1 }")
+        self.assertEqual(data[0]["attributes"]["tpl"], "{ x >> 1 }")
         self.assertEqual(data, data2)
 
     def test_round_trip_comment_marker_string(self):
         original = '-> x\n    note >> "hola :: mundo"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["note"], "hola :: mundo")
+        self.assertEqual(data[0]["attributes"]["note"], "hola :: mundo")
         self.assertEqual(data, data2)
 
     def test_round_trip_empty_and_whitespace_strings(self):
         original = '-> x\n    a >> ""\n    b >> "  padded  "\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["a"], "")
-        self.assertEqual(data[0]["atributos"]["b"], "  padded  ")
+        self.assertEqual(data[0]["attributes"]["a"], "")
+        self.assertEqual(data[0]["attributes"]["b"], "  padded  ")
         self.assertEqual(data, data2)
 
     def test_round_trip_leading_zero_string(self):
         original = "-> x\n    code >> 007\n<-\n"
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["code"], "007")
+        self.assertEqual(data[0]["attributes"]["code"], "007")
         self.assertEqual(data, data2)
 
     def test_round_trip_list_with_ambiguous_items(self):
         original = '-> x\n    items >> "1" | two | "true"\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["items"], ["1", "two", "true"])
+        self.assertEqual(data[0]["attributes"]["items"], ["1", "two", "true"])
         self.assertEqual(data, data2)
 
     def test_round_trip_object_with_ambiguous_values(self):
         original = '-> x\n    m >> { n >> "42" | ok >> "false" }\n<-\n'
         data, data2 = self._round_trip(original)
-        self.assertEqual(data[0]["atributos"]["m"], {"n": "42", "ok": "false"})
+        self.assertEqual(data[0]["attributes"]["m"], {"n": "42", "ok": "false"})
         self.assertEqual(data, data2)
 
     def test_needs_quotes_cases(self):
@@ -417,108 +417,116 @@ class TestSerializer(unittest.TestCase):
 
 class TestValidator(unittest.TestCase):
     def test_valid_simple(self):
-        data = [{"tipo": "user", "atributos": {"name": "Juan"}, "hijos": []}]
-        schema = {"tipo": "user", "atributos": {"name": {"tipo": "str"}}, "hijos": []}
+        data = [{"type": "user", "attributes": {"name": "Juan"}, "children": []}]
+        schema = {"type": "user", "attributes": {"name": {"type": "str"}}, "children": []}
         errs = validate_psr(data, schema)
         self.assertEqual(errs, [])
 
-    def test_wrong_tipo(self):
-        data = [{"tipo": "admin", "atributos": {}, "hijos": []}]
-        schema = {"tipo": "user", "atributos": {}, "hijos": []}
+    def test_wrong_type(self):
+        data = [{"type": "admin", "attributes": {}, "children": []}]
+        schema = {"type": "user", "attributes": {}, "children": []}
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_missing_required_attr(self):
-        data = [{"tipo": "user", "atributos": {}, "hijos": []}]
+        data = [{"type": "user", "attributes": {}, "children": []}]
         schema = {
-            "tipo": "user",
-            "atributos": {"name": {"tipo": "str", "obligatorio": True}},
-            "hijos": [],
+            "type": "user",
+            "attributes": {"name": {"type": "str", "required": True}},
+            "children": [],
         }
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_wrong_type_int(self):
-        data = [{"tipo": "x", "atributos": {"n": "hello"}, "hijos": []}]
-        schema = {"tipo": "x", "atributos": {"n": {"tipo": "int"}}, "hijos": []}
+        data = [{"type": "x", "attributes": {"n": "hello"}, "children": []}]
+        schema = {"type": "x", "attributes": {"n": {"type": "int"}}, "children": []}
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_wrong_type_bool_not_int(self):
-        data = [{"tipo": "x", "atributos": {"n": True}, "hijos": []}]
-        schema = {"tipo": "x", "atributos": {"n": {"tipo": "int"}}, "hijos": []}
+        data = [{"type": "x", "attributes": {"n": True}, "children": []}]
+        schema = {"type": "x", "attributes": {"n": {"type": "int"}}, "children": []}
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_list_type(self):
-        data = [{"tipo": "x", "atributos": {"items": [1, 2, 3]}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"items": [1, 2, 3]}, "children": []}]
         schema = {
-            "tipo": "x",
-            "atributos": {"items": {"tipo": "list", "items_tipo": "int"}},
-            "hijos": [],
+            "type": "x",
+            "attributes": {"items": {"type": "list", "items_type": "int"}},
+            "children": [],
         }
         errs = validate_psr(data, schema)
         self.assertEqual(errs, [])
 
     def test_list_type_wrong_item(self):
-        data = [{"tipo": "x", "atributos": {"items": [1, "bad", 3]}, "hijos": []}]
+        data = [{"type": "x", "attributes": {"items": [1, "bad", 3]}, "children": []}]
         schema = {
-            "tipo": "x",
-            "atributos": {"items": {"tipo": "list", "items_tipo": "int"}},
-            "hijos": [],
+            "type": "x",
+            "attributes": {"items": {"type": "list", "items_type": "int"}},
+            "children": [],
         }
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_extra_children(self):
         data = [
-            {"tipo": "x", "atributos": {}, "hijos": [{"tipo": "y", "atributos": {}, "hijos": []}]}
+            {
+                "type": "x",
+                "attributes": {},
+                "children": [{"type": "y", "attributes": {}, "children": []}],
+            }
         ]
-        schema = {"tipo": "x", "atributos": {}, "hijos": []}
+        schema = {"type": "x", "attributes": {}, "children": []}
         errs = validate_psr(data, schema)
         self.assertGreater(len(errs), 0)
 
     def test_valid_children(self):
         data = [
             {
-                "tipo": "x",
-                "atributos": {},
-                "hijos": [{"tipo": "y", "atributos": {"val": 1}, "hijos": []}],
+                "type": "x",
+                "attributes": {},
+                "children": [{"type": "y", "attributes": {"val": 1}, "children": []}],
             }
         ]
         schema = {
-            "tipo": "x",
-            "atributos": {},
-            "hijos": [{"tipo": "y", "atributos": {"val": {"tipo": "int"}}, "hijos": []}],
+            "type": "x",
+            "attributes": {},
+            "children": [{"type": "y", "attributes": {"val": {"type": "int"}}, "children": []}],
         }
         errs = validate_psr(data, schema)
         self.assertEqual(errs, [])
 
     def test_missing_children_reported(self):
-        data = [{"tipo": "a", "atributos": {}, "hijos": []}]
+        data = [{"type": "a", "attributes": {}, "children": []}]
         schema = {
-            "tipo": "a",
-            "atributos": {},
-            "hijos": [
-                {"tipo": "b", "atributos": {}, "hijos": []},
-                {"tipo": "c", "atributos": {}, "hijos": []},
+            "type": "a",
+            "attributes": {},
+            "children": [
+                {"type": "b", "attributes": {}, "children": []},
+                {"type": "c", "attributes": {}, "children": []},
             ],
         }
         errs = validate_psr(data, schema)
         self.assertEqual(len(errs), 1)
-        self.assertIn("faltantes", errs[0])
+        self.assertIn("missing", errs[0])
         self.assertIn("b, c", errs[0])
 
     def test_partial_missing_children(self):
         data = [
-            {"tipo": "a", "atributos": {}, "hijos": [{"tipo": "b", "atributos": {}, "hijos": []}]}
+            {
+                "type": "a",
+                "attributes": {},
+                "children": [{"type": "b", "attributes": {}, "children": []}],
+            }
         ]
         schema = {
-            "tipo": "a",
-            "atributos": {},
-            "hijos": [
-                {"tipo": "b", "atributos": {}, "hijos": []},
-                {"tipo": "c", "atributos": {}, "hijos": []},
+            "type": "a",
+            "attributes": {},
+            "children": [
+                {"type": "b", "attributes": {}, "children": []},
+                {"type": "c", "attributes": {}, "children": []},
             ],
         }
         errs = validate_psr(data, schema)
@@ -526,19 +534,24 @@ class TestValidator(unittest.TestCase):
         self.assertIn("c", errs[0])
 
     def test_lenient_allows_extra_attrs(self):
-        data = [{"tipo": "x", "atributos": {"extra": 1}, "hijos": []}]
-        schema = {"tipo": "x", "atributos": {}, "hijos": []}
+        data = [{"type": "x", "attributes": {"extra": 1}, "children": []}]
+        schema = {"type": "x", "attributes": {}, "children": []}
         errs = validate_psr(data, schema)
         self.assertEqual(errs, [])
 
     def test_strict_rejects_extra_attrs(self):
-        data = [{"tipo": "x", "atributos": {"extra": 1, "ok": 2}, "hijos": []}]
-        schema = {"tipo": "x", "estricto": True, "atributos": {"ok": {"tipo": "int"}}, "hijos": []}
+        data = [{"type": "x", "attributes": {"extra": 1, "ok": 2}, "children": []}]
+        schema = {
+            "type": "x",
+            "strict": True,
+            "attributes": {"ok": {"type": "int"}},
+            "children": [],
+        }
         errs = validate_psr(data, schema)
         self.assertEqual(len(errs), 1)
-        self.assertIn("no permitido", errs[0])
+        self.assertIn("not allowed", errs[0])
         self.assertIn("extra", errs[0])
-        self.assertIn("estricto", errs[0])
+        self.assertIn("strict", errs[0])
 
 
 class TestEdgeCases(unittest.TestCase):
@@ -607,18 +620,18 @@ class TestEdgeCases(unittest.TestCase):
 
 class TestExpandPsrSchema(unittest.TestCase):
     def test_expand_simple(self):
-        block = {"tipo": "user", "atributos": {"name": "str"}, "hijos": []}
+        block = {"type": "user", "attributes": {"name": "str"}, "children": []}
         expanded = _expand_psr_schema(block)
-        self.assertEqual(expanded["atributos"]["name"], {"tipo": "str"})
+        self.assertEqual(expanded["attributes"]["name"], {"type": "str"})
 
     def test_expand_nested(self):
         block = {
-            "tipo": "x",
-            "atributos": {},
-            "hijos": [{"tipo": "y", "atributos": {"val": "int"}, "hijos": []}],
+            "type": "x",
+            "attributes": {},
+            "children": [{"type": "y", "attributes": {"val": "int"}, "children": []}],
         }
         expanded = _expand_psr_schema(block)
-        self.assertEqual(expanded["hijos"][0]["atributos"]["val"], {"tipo": "int"})
+        self.assertEqual(expanded["children"][0]["attributes"]["val"], {"type": "int"})
 
 
 if __name__ == "__main__":

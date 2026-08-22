@@ -10,83 +10,8 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
-  /* ============ Resaltado de sintaxis ============ */
-  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  const typeVal = v => {
-    v = v.trim();
-    if (/^".*"$/s.test(v)) return `<span class="tk-str">${esc(v)}</span>`;
-    if (/^(true|false)$/i.test(v)) return `<span class="tk-bool">${esc(v)}</span>`;
-    if (/^-?\d+(\.\d+)?$/.test(v)) return `<span class="tk-num">${esc(v)}</span>`;
-    return esc(v);
-  };
-
-  const splitList = rest =>
-    rest.split('|').map(p => typeVal(p)).join(' <span class="tk-op">|</span> ');
-
-  const hlPsrLine = line => {
-    const ind = (line.match(/^\s*/) || [''])[0];
-    let body = line.slice(ind.length);
-
-    // comentario fuera de comillas
-    let ci = -1, q = false;
-    for (let i = 0; i < body.length; i++) {
-      if (body[i] === '"') q = !q;
-      if (!q && body[i] === ':' && body[i + 1] === ':') { ci = i; break; }
-    }
-    let comPart = '';
-    if (ci >= 0) {
-      comPart = `<span class="tok-comment">${esc(body.slice(ci))}</span>`;
-      body = body.slice(0, ci).replace(/\s+$/, '');
-    }
-    if (!body.trim()) return esc(ind) + comPart;
-
-    if (/^->/.test(body)) {
-      const name = body.replace(/^->\s*/, '');
-      return esc(ind) + `<span class="tk-block">-&gt;</span> <span class="tk-block">${esc(name)}</span>` + comPart;
-    }
-    if (/^<-/.test(body)) return esc(ind) + '<span class="tk-block">&lt;-</span>' + comPart;
-
-    const am = body.match(/^([A-Za-z_][\w-]*)(\s*)(>>)(\s*)([\s\S]*)$/);
-    if (am) {
-      let valHtml;
-      const rest = am[5];
-      if (rest.trim() === '<<') {
-        valHtml = '<span class="tk-op">&lt;&lt;</span>';
-      } else if (rest.includes('|')) {
-        valHtml = splitList(rest);
-      } else if (/^\{.*\}$/.test(rest.trim())) {
-        valHtml = esc(rest.trim())
-          .replace(/\{|\}/g, m => `<span class="tk-op">${m}</span>`)
-          .replace(/&gt;&gt;/g, ' <span class="tk-op">&gt;&gt;</span> ');
-      } else {
-        valHtml = typeVal(rest);
-      }
-      return esc(ind)
-        + `<span class="tk-key">${esc(am[1])}</span>`
-        + am[2]
-        + '<span class="tk-op">&gt;&gt;</span>'
-        + am[4]
-        + valHtml + comPart;
-    }
-
-    return esc(ind) + esc(body) + comPart;
-  };
-
-  const hlJson = t =>
-    esc(t).replace(
-      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
-      (m, str, col, bool) => {
-        if (str) return col ? `<span class="j-key">${str}</span>${col}` : `<span class="j-str">${str}</span>`;
-        if (bool) return `<span class="j-bool">${m}</span>`;
-        return `<span class="j-num">${m}</span>`;
-      }
-    );
-
-  $$('.code-psr').forEach(el => {
-    el.innerHTML = el.textContent.split('\n').map(hlPsrLine).join('\n');
-  });
-  $$('.code-json').forEach(el => { el.innerHTML = hlJson(el.textContent); });
+  /* El resaltado de sintaxis vive en assets/js/lib/highlight.js (compartido
+     con playground.js para evitar duplicación). */
 
   /* ============ Campo de estrellas ============ */
   const makeStars = (canvas, count = 150) => {
@@ -217,24 +142,24 @@
   if (termBody) {
     const SCRIPT = [
       {
-        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr parse '], ['t-flag', '-f usuarios.psr']],
+        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr parse '], ['t-flag', '-f users.psr']],
         out: [
           ['t-out', '['],
           ['t-out', '  {'],
-          ['j-key', '    "tipo": "usuario",'],
-          ['t-out', '    "atributos": { "nombre": "Ada", "edad": 25 },'],
-          ['t-out', '    "hijos": []'],
+          ['j-key', '    "type": "user",'],
+          ['t-out', '    "attributes": { "name": "Ada", "age": 25 },'],
+          ['t-out', '    "children": []'],
           ['t-out', '  }'],
           ['t-out', ']']
         ]
       },
       {
-        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr dump '], ['t-flag', '-f usuarios.psr -o copia.psr']],
-        out: [['t-ok', 'Archivo dump creado en: copia.psr']]
+        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr dump '], ['t-flag', '-f users.psr -o copy.psr']],
+        out: [['t-ok', 'Dump file created at: copy.psr']]
       },
       {
-        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr validate '], ['t-flag', '-f usuarios.psr -s esquema.json']],
-        out: [['t-ok', 'Archivo válido ✔']]
+        cmd: [['t-prompt', '$ '], ['t-cmd', 'psr validate '], ['t-flag', '-f users.psr -s schema.json']],
+        out: [['t-ok', 'File valid ✔']]
       }
     ];
 

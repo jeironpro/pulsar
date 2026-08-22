@@ -17,7 +17,7 @@
 
   /* ============ Ejemplos precargados ============ */
   const EXAMPLES = {
-    contactos: `-> contacto
+    contacts: `-> contacto
     nombre >> "Ana Torres"
     edad >> 25
     activo >> true
@@ -33,7 +33,7 @@
     edad >> 41
     skills >> javascript | html
 <-`,
-    servidor: `-> app
+    server: `-> app
     nombre >> "Mi Servicio"
     version >> 1.4
     debug >> false
@@ -46,7 +46,7 @@
         pool >> 8
     <-
 <-`,
-    errores: `-> base_datos
+    errors: `-> base_datos
     url >> postgres://localhost/app
     pool >> 5
 
@@ -59,7 +59,7 @@
   const setExample = name => {
     if (EXAMPLES[name]) input.value = EXAMPLES[name];
   };
-  setExample('contactos');
+  setExample('contacts');
 
   document.querySelectorAll('.chip[data-example]').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -70,17 +70,8 @@
     });
   });
 
-  /* ============ Resaltado JSON de la salida ============ */
-  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const hlJson = t =>
-    esc(t).replace(
-      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
-      (m, str, col, bool) => {
-        if (str) return col ? `<span class="j-key">${str}</span>${col}` : `<span class="j-str">${str}</span>`;
-        if (bool) return `<span class="j-bool">${m}</span>`;
-        return `<span class="j-num">${m}</span>`;
-      }
-    );
+  /* El resaltado vive en assets/js/lib/highlight.js (window.PSRHl). */
+  const hlJson = window.PSRHl.hlJson;
 
   const resetOutput = () => {
     outEl.hidden = true;

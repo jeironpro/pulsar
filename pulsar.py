@@ -6,7 +6,7 @@ import re
 import sys
 from typing import Any
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 
 # ----------------------------
@@ -78,9 +78,9 @@ def lex_psr(text: str) -> list[dict]:
         if stripped.startswith("->"):
             block_name = stripped[2:].strip()
             if not block_name:
-                raise PSRLexError(f'Línea {lineno}: falta el nombre del bloque después de "->"')
+                raise PSRLexError(f'Line {lineno}: missing block name after "->"')
             if not id_re.match(block_name):
-                raise PSRLexError(f"Línea {lineno}: nombre de bloque inválido -> {block_name}")
+                raise PSRLexError(f"Line {lineno}: invalid block name -> {block_name}")
             col = raw.index("->") + 1
             tokens.append(
                 {"type": "BLOCK_START", "value": block_name, "line": lineno, "column": col}
@@ -92,20 +92,20 @@ def lex_psr(text: str) -> list[dict]:
 
         elif stripped.startswith("-") and not stripped.startswith("->"):
             col = raw.index("-") + 1
-            raise PSRLexError(f"Línea {lineno} col {col}: operador incompleto")
+            raise PSRLexError(f"Line {lineno} col {col}: incomplete operator")
 
         elif stripped.startswith("<") and not stripped.startswith("<-"):
             col = raw.index("<") + 1
-            raise PSRLexError(f"Línea {lineno} col {col}: operador incompleto")
+            raise PSRLexError(f"Line {lineno} col {col}: incomplete operator")
 
         elif ">>" in stripped:
             key, val = map(str.strip, stripped.split(">>", 1))
             if not key:
-                raise PSRLexError(f"Línea {lineno}: falta la clave del atributo")
+                raise PSRLexError(f"Line {lineno}: missing attribute key")
             if not id_re.match(key):
-                raise PSRLexError(f"Línea {lineno}: nombre de atributo inválido -> {key}")
+                raise PSRLexError(f"Line {lineno}: invalid attribute name -> {key}")
 
-            # multiline value
+            # valor multilinea
             if val == "<<":
                 in_multiline = True
                 multiline_key = key
@@ -114,7 +114,7 @@ def lex_psr(text: str) -> list[dict]:
                 continue
 
             if "," in val:
-                raise PSRLexError(f'Línea {lineno}: comas no permitidas (use "|" para listas)')
+                raise PSRLexError(f'Line {lineno}: commas not allowed (use "|" for lists)')
 
             col = raw.index(">>") + 1
             tokens.append(
@@ -122,10 +122,10 @@ def lex_psr(text: str) -> list[dict]:
             )
 
         else:
-            raise PSRLexError(f"Línea {lineno}: línea no reconocida -> {line}")
+            raise PSRLexError(f"Line {lineno}: unrecognized line -> {line}")
 
     if in_multiline:
-        raise PSRLexError(f"Línea {multiline_start}: multiline sin cerrar")
+        raise PSRLexError(f"Line {multiline_start}: unclosed multiline")
 
     last_line = lineno if lines else 0
     tokens.append({"type": "EOF", "value": "", "line": last_line + 1, "column": 0})
@@ -228,16 +228,16 @@ def parse(tokens: list[dict]) -> list[BlockNode]:
             stack.append(node)
         elif tok["type"] == "BLOCK_END":
             if not stack:
-                raise PSRParseError(f"Cierre sin apertura en línea {tok['line']}")
+                raise PSRParseError(f"Close without open at line {tok['line']}")
             stack.pop()
         elif tok["type"] == "ATTRIBUTE":
             if not stack:
-                raise PSRParseError(f"Atributo fuera de bloque en línea {tok['line']}")
+                raise PSRParseError(f"Attribute outside block at line {tok['line']}")
             stack[-1].attributes.append(AttributeNode(tok["key"], tok["value"], tok["line"]))
         elif tok["type"] == "EOF":
             break
     if stack:
-        raise PSRParseError("Bloque(s) sin cerrar")
+        raise PSRParseError("Unclosed block(s)")
     return ast
 
 
@@ -246,18 +246,18 @@ def parse(tokens: list[dict]) -> list[BlockNode]:
 # ----------------------------
 def build_block(block_node: BlockNode, depth: int = 0) -> dict[str, Any]:
     if depth > _MAX_DEPTH:
-        raise PSRParseError("Excedida profundidad máxima de anidamiento")
-    atributos: dict[str, Any] = {}
+        raise PSRParseError("Max nesting depth exceeded")
+    attributes: dict[str, Any] = {}
     for attr in block_node.attributes:
-        if attr.key in atributos:
+        if attr.key in attributes:
             raise PSRParseError(
-                f'Clave duplicada "{attr.key}" en bloque "{block_node.name}" línea {attr.lineno}'
+                f'Duplicate key "{attr.key}" in block "{block_node.name}" at line {attr.lineno}'
             )
-        atributos[attr.key] = resolve_value(attr.value)
+        attributes[attr.key] = resolve_value(attr.value)
     block_dict = {
-        "tipo": block_node.name,
-        "atributos": atributos,
-        "hijos": [build_block(c, depth + 1) for c in block_node.children],
+        "type": block_node.name,
+        "attributes": attributes,
+        "children": [build_block(c, depth + 1) for c in block_node.children],
     }
     return block_dict
 
@@ -315,8 +315,8 @@ def dump_value(value: Any) -> str:
 
 def serialize_block(block: dict[str, Any], indent: int = 0) -> str:
     pad = " " * indent
-    lines = [f"{pad}-> {block['tipo']}"]
-    for k, v in block["atributos"].items():
+    lines = [f"{pad}-> {block['type']}"]
+    for k, v in block["attributes"].items():
         dv = dump_value(v)
         if dv.startswith("<<\n"):
             lines.append(f"{pad}    {k} >> <<")
@@ -324,7 +324,7 @@ def serialize_block(block: dict[str, Any], indent: int = 0) -> str:
             lines.append(f"{pad}    >>")
         else:
             lines.append(f"{pad}    {k} >> {dv}")
-    for c in block["hijos"]:
+    for c in block["children"]:
         lines.append(serialize_block(c, indent + 4))
     lines.append(f"{pad}<-")
     return "\n".join(lines)
@@ -353,51 +353,51 @@ def load_psr(file_path: str) -> list[BlockNode]:
 # ----------------------------
 # Validator
 # ----------------------------
-def _type_matches(tipo_str: str, value: Any) -> bool:
-    if tipo_str == "int" and isinstance(value, bool):
+def _type_matches(type_str: str, value: Any) -> bool:
+    if type_str == "int" and isinstance(value, bool):
         return False
     mapping: dict[str, type] = {"str": str, "int": int, "float": float, "bool": bool}
-    if tipo_str not in mapping:
+    if type_str not in mapping:
         return True
-    return isinstance(value, mapping[tipo_str])
+    return isinstance(value, mapping[type_str])
 
 
 def validate_block(block: dict[str, Any], schema: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if block["tipo"] != schema["tipo"]:
-        errors.append(f"Tipo bloque esperado {schema['tipo']} encontrado {block['tipo']}")
-    for k, attr_sch in schema.get("atributos", {}).items():
-        if attr_sch.get("obligatorio") and k not in block["atributos"]:
-            errors.append(f"Atributo obligatorio {k} ausente en {block['tipo']}")
-        elif k in block["atributos"]:
-            v = block["atributos"][k]
-            t = attr_sch["tipo"]
+    if block["type"] != schema["type"]:
+        errors.append(f"Expected block type {schema['type']} but found {block['type']}")
+    for k, attr_schema in schema.get("attributes", {}).items():
+        if attr_schema.get("required") and k not in block["attributes"]:
+            errors.append(f"Required attribute {k} missing in {block['type']}")
+        elif k in block["attributes"]:
+            v = block["attributes"][k]
+            t = attr_schema["type"]
             if t == "list":
                 if not isinstance(v, list):
-                    errors.append(f"{k} debe ser lista en {block['tipo']}")
-                elif "items_tipo" in attr_sch:
+                    errors.append(f"{k} must be a list in {block['type']}")
+                elif "items_type" in attr_schema:
                     for i, item in enumerate(v):
-                        if not _type_matches(attr_sch["items_tipo"], item):
+                        if not _type_matches(attr_schema["items_type"], item):
                             errors.append(
-                                f"{k}[{i}] debe ser {attr_sch['items_tipo']} en {block['tipo']}"
+                                f"{k}[{i}] must be {attr_schema['items_type']} in {block['type']}"
                             )
             else:
                 if not _type_matches(t, v):
-                    errors.append(f"{k} debe ser {t} en {block['tipo']}")
-    if schema.get("estricto"):
-        for k in block["atributos"]:
-            if k not in schema.get("atributos", {}):
-                errors.append(f"Atributo {k} no permitido en {block['tipo']} (modo estricto)")
-    block_hijos = block.get("hijos", [])
-    schema_hijos = schema.get("hijos", [])
-    for i, child_sch in enumerate(schema_hijos):
-        if i < len(block_hijos):
-            errors.extend(validate_block(block_hijos[i], child_sch))
-    if len(block_hijos) > len(schema_hijos):
-        errors.append(f"Bloque {block['tipo']} tiene más hijos de los esperados")
-    if len(block_hijos) < len(schema_hijos):
-        faltantes = ", ".join(s["tipo"] for s in schema_hijos[len(block_hijos) :])
-        errors.append(f"Bloque {block['tipo']} tiene hijos faltantes: {faltantes}")
+                    errors.append(f"{k} must be {t} in {block['type']}")
+    if schema.get("strict"):
+        for k in block["attributes"]:
+            if k not in schema.get("attributes", {}):
+                errors.append(f"Attribute {k} not allowed in {block['type']} (strict mode)")
+    block_children = block.get("children", [])
+    schema_children = schema.get("children", [])
+    for i, child_schema in enumerate(schema_children):
+        if i < len(block_children):
+            errors.extend(validate_block(block_children[i], child_schema))
+    if len(block_children) > len(schema_children):
+        errors.append(f"Block {block['type']} has more children than expected")
+    if len(block_children) < len(schema_children):
+        missing = ", ".join(s["type"] for s in schema_children[len(block_children) :])
+        errors.append(f"Block {block['type']} has missing children: {missing}")
     return errors
 
 
@@ -412,14 +412,14 @@ def validate_psr(data: list[dict[str, Any]], schema: dict[str, Any]) -> list[str
 # Schema loader (.json / .psr)
 # ----------------------------
 def _expand_psr_schema(block: dict[str, Any]) -> dict[str, Any]:
-    result: dict[str, Any] = {"tipo": block["tipo"], "atributos": {}, "hijos": []}
-    for k, v in block.get("atributos", {}).items():
+    result: dict[str, Any] = {"type": block["type"], "attributes": {}, "children": []}
+    for k, v in block.get("attributes", {}).items():
         if isinstance(v, str):
-            result["atributos"][k] = {"tipo": v}
+            result["attributes"][k] = {"type": v}
         else:
-            result["atributos"][k] = v
-    for child in block.get("hijos", []):
-        result["hijos"].append(_expand_psr_schema(child))
+            result["attributes"][k] = v
+    for child in block.get("children", []):
+        result["children"].append(_expand_psr_schema(child))
     return result
 
 
@@ -440,11 +440,11 @@ def load_schema(path: str) -> Any:
 def main():
     parser = argparse.ArgumentParser(
         prog="pulsar",
-        description="Parser y herramientas para formato PULSAR (.psr)",
-        epilog="Ejemplos:\n"
-        "  pulsar parse -f datos.psr\n"
-        "  pulsar dump -f datos.psr -o salida.psr\n"
-        "  pulsar validate -f datos.psr -s schema.json\n"
+        description="Parser and tooling for the PULSAR (.psr) data format",
+        epilog="Examples:\n"
+        "  pulsar parse -f data.psr\n"
+        "  pulsar dump -f data.psr -o out.psr\n"
+        "  pulsar validate -f data.psr -s schema.json\n"
         "  pulsar version",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -453,30 +453,28 @@ def main():
 
     p_parse = sub.add_parser(
         "parse",
-        help="Parsear .psr y mostrar JSON",
-        description="Parsea un archivo .psr y muestra su estructura en JSON.",
+        help="Parse .psr and print JSON",
+        description="Parses a .psr file and prints its structure as JSON.",
     )
-    p_parse.add_argument("-f", "--file", required=True, help="Archivo .psr de entrada")
+    p_parse.add_argument("-f", "--file", required=True, help="Input .psr file")
 
     p_dump = sub.add_parser(
         "dump",
-        help="Serializar .psr a texto",
-        description="Parsea y re-serializa un .psr (round-trip).",
+        help="Serialize .psr to text",
+        description="Parses and re-serializes a .psr (round-trip).",
     )
-    p_dump.add_argument("-f", "--file", required=True, help="Archivo .psr de entrada")
-    p_dump.add_argument("-o", "--output", help="Archivo de salida (stdout si se omite)")
+    p_dump.add_argument("-f", "--file", required=True, help="Input .psr file")
+    p_dump.add_argument("-o", "--output", help="Output file (stdout if omitted)")
 
     p_val = sub.add_parser(
         "validate",
-        help="Validar .psr contra un schema",
-        description="Valida un .psr contra un schema JSON o .psr.",
+        help="Validate a .psr against a schema",
+        description="Validates a .psr against a JSON or .psr schema.",
     )
-    p_val.add_argument("-f", "--file", required=True, help="Archivo .psr de entrada")
-    p_val.add_argument("-s", "--schema", required=True, help="Schema (.json o .psr)")
+    p_val.add_argument("-f", "--file", required=True, help="Input .psr file")
+    p_val.add_argument("-s", "--schema", required=True, help="Schema (.json or .psr)")
 
-    sub.add_parser(
-        "version", help="Mostrar versión", description="Muestra la versión actual de PULSAR."
-    )
+    sub.add_parser("version", help="Show version", description="Prints the current PULSAR version.")
 
     args = parser.parse_args()
 
@@ -496,7 +494,7 @@ def main():
             if args.output:
                 with open(args.output, "w", encoding="utf-8") as f:
                     f.write(text)
-                print(f"Archivo dump creado en: {args.output}")
+                print(f"Dump file created at: {args.output}")
             else:
                 print(text, end="")
 
@@ -510,7 +508,7 @@ def main():
                     print("Error:", e)
                 sys.exit(1)
             else:
-                print("Archivo válido ✅")
+                print("File valid ✅")
 
     except (PSRLexError, PSRParseError, OSError, json.JSONDecodeError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)
