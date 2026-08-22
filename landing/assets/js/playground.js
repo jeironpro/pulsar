@@ -56,17 +56,17 @@
 -> cache
     ttl >> 120
 <-
-:: falta cerrar el bloque base_datos`
+:: falta cerrar el bloque base_datos`,
   };
 
-  const setExample = name => {
+  const setExample = (name) => {
     if (EXAMPLES[name]) input.value = EXAMPLES[name];
   };
   setExample('contacts');
 
-  $$('.chip[data-example]').forEach(chip => {
+  $$('.chip[data-example]').forEach((chip) => {
     chip.addEventListener('click', () => {
-      $$('.chip[data-example]').forEach(c => {
+      $$('.chip[data-example]').forEach((c) => {
         const active = c === chip;
         c.classList.toggle('is-active', active);
         c.setAttribute('aria-pressed', String(active));
@@ -90,35 +90,40 @@
   let loadingPyodide = null;
   let parserReady = false;
 
-  const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js';
+  const PYODIDE_URL =
+    'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js';
   const INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.2/full/';
 
-  const loadScript = src => new Promise((res, rej) => {
-    if (window.loadPyodide) return res();
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = res;
-    s.onerror = () => rej(new Error('No se pudo descargar Pyodide'));
-    document.head.appendChild(s);
-  });
+  const loadScript = (src) =>
+    new Promise((res, rej) => {
+      if (window.loadPyodide) return res();
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = res;
+      s.onerror = () => rej(new Error('No se pudo descargar Pyodide'));
+      document.head.appendChild(s);
+    });
 
   const ensureEngine = async () => {
     if (parserReady) return;
 
     if (!loadingPyodide) {
       loadingPyodide = (async () => {
-        status.textContent = 'Descargando Python (WebAssembly)… ~10 MB, solo una vez';
+        status.textContent =
+          'Descargando Python (WebAssembly)… ~10 MB, solo una vez';
         await loadScript(PYODIDE_URL);
         pyodide = await window.loadPyodide({ indexURL: INDEX_URL });
 
         status.textContent = 'Cargando pulsar.py…';
         const resp = await fetch('./pulsar.py');
-        if (!resp.ok) throw new Error(`No se pudo cargar pulsar.py (${resp.status})`);
+        if (!resp.ok)
+          throw new Error(`No se pudo cargar pulsar.py (${resp.status})`);
         const src = await resp.text();
         pyodide.FS.writeFile('/pulsar.py', src);
         pyodide.runPython('import sys; sys.path.insert(0, "/"); import pulsar');
         parserReady = true;
-        status.textContent = 'Motor listo: parser real ejecutándose en tu navegador.';
+        status.textContent =
+          'Motor listo: parser real ejecutándose en tu navegador.';
       })();
     }
     await loadingPyodide;
@@ -139,7 +144,7 @@ def _run(src):
     return _json.dumps(payload, ensure_ascii=False)
 `;
 
-  const parseSource = source => {
+  const parseSource = (source) => {
     pyodide.globals.set('__psr_src', source);
     pyodide.runPython(RUNNER);
     const raw = pyodide.runPython('_run(__psr_src)');
@@ -167,7 +172,8 @@ def _run(src):
     } catch (e) {
       status.textContent = '';
       errMsg.textContent =
-        e.message === 'No se pudo descargar Pyodide' || /pulsar\.py/.test(e.message)
+        e.message === 'No se pudo descargar Pyodide' ||
+        /pulsar\.py/.test(e.message)
           ? `${e.message}. Revisa tu conexión o inténtalo de nuevo.`
           : `Fallo inesperado: ${e.message}`;
       errEl.hidden = false;

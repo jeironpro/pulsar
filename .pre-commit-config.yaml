@@ -19,3 +19,12 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  # Landing estática sin package.json: Prettier vía npx (PRECOMMIT.md)
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier --write
+        language: system
+        files: \.(html|css|js)$
