@@ -3,8 +3,10 @@
 [![CI](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml/badge.svg)](https://github.com/jeironpro/pulsar/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Lib](https://img.shields.io/badge/pulsar--psr-v2.0.0-gold)](pyproject.toml)
 
 > **Estado:** Draft estable  
+> **Librería:** `pulsar-psr` v2.0.0 — desde v2.0 la representación en memoria usa claves en inglés: `type`, `attributes`, `children` (el formato `.psr` no cambia).  
 > **Propósito:** Formato de datos estructurados, legible por humanos, jerárquico y extensible, diseñado desde cero (no derivado de JSON/YAML/TOML).  
 > **Contribuciones:** leer [CONTRIBUTING](CONTRIBUTING.md).  
 > **Desarrollo:** Este formato se desarrollo por la idea de un tipo de archivo diferente a los demas y facil de leer, se creo con la ayuda del modelo/IA ChatGPT.
@@ -41,9 +43,9 @@ Un archivo `.psr` representa una **colección de nodos raíz**.
 
 Un nodo es una entidad con esta estructura conceptual:
 
-* `tipo` : string (obligatorio)
-* `atributos` : mapa clave–valor (opcional)
-* `hijos` : lista de nodos (opcional)
+* `type` : string (obligatorio)
+* `attributes` : mapa clave–valor (opcional)
+* `children` : lista de nodos (opcional)
 
 ### 1.3 Tipos de valores permitidos
 
@@ -122,32 +124,32 @@ Al parsear el ejemplo anterior, el resultado **normalizado** es:
 ```
 [
   {
-    "tipo": "user",
-    "atributos": {
+    "type": "user",
+    "attributes": {
       "name": "Juan",
       "age": 30,
       "active": true,
       "skills": ["python", "go", "rust"]
     },
-    "hijos": [
+    "children": [
       {
-        "tipo": "address",
-        "atributos": {
+        "type": "address",
+        "attributes": {
           "city": "Madrid",
           "zip": 28000
         },
-        "hijos": []
+        "children": []
       }
     ]
   },
   {
-    "tipo": "user",
-    "atributos": {
+    "type": "user",
+    "attributes": {
       "name": "Ana",
       "age": 25,
       "skills": ["javascript", "html", "css"]
     },
-    "hijos": []
+    "children": []
   }
 ]
 ```
@@ -160,9 +162,9 @@ Al parsear el ejemplo anterior, el resultado **normalizado** es:
 PulsarFile := Node+
 
 Node :=
-  "tipo": string
-  "atributos"?: Map<string, Value>
-  "hijos"?: List<Node>
+  "type": string
+  "attributes"?: Map<string, Value>
+  "children"?: List<Node>
 
 Value := string | number | boolean | List<Value> | Map<string, Value>
 ```
@@ -707,7 +709,7 @@ def main():
 
     try:
         if cmd == "version":
-            print("PULSAR CLI v1.0")
+            print("PULSAR CLI v2.0.0")
             return
 
         elif cmd == "parse":
@@ -723,7 +725,7 @@ def main():
             ast = load_psr(file_path)
             data = build_document(ast)
             dump_psr(data, output)
-            print(f"Archivo dump creado en: {output or 'stdout'}")
+            print(f"Dump file created at: {output or 'stdout'}")
 
         elif cmd == "validate":
             file_path = opts.get("file") or opts.get("f")
@@ -739,7 +741,7 @@ def main():
                 for e in errs:
                     print("Error:", e)
             else:
-                print("Archivo válido ✅")
+                print("File valid ✅")
         else:
             print(f"Comando desconocido: {cmd}")
 
