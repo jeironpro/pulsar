@@ -340,6 +340,10 @@ canvas {
   font-size: 0.85rem;
   margin-left: 0.35rem;
 }
+.nav-gh-status {
+  color: var(--red);
+  font-size: 0.8rem;
+}
 
 /* ============ Hero ============ */
 .hero {

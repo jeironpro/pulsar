@@ -201,27 +201,81 @@
     });
   }
 
-  /* ============ Estrellas de GitHub (API publica, con fallback) ============ */
+  /* ============ GitHub repo info (API pública + caché localStorage) ============ */
+  const GH_REPO_CACHE = 'gh-pulsar-repo';
+  const GH_TTL = 3_600_000; // 1 h
+
   const ghStars = $('[data-gh-stars]');
-  if (ghStars) {
+  const ghStatus = $('[data-gh-repo-status]');
+
+  function readGhCache() {
+    try {
+      const raw = localStorage.getItem(GH_REPO_CACHE);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return Date.now() - data.ts < GH_TTL ? data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeGhCache(data) {
+    try {
+      localStorage.setItem(
+        GH_REPO_CACHE,
+        JSON.stringify({ ...data, ts: Date.now() }),
+      );
+    } catch {
+      /* cuota de storage o entorno sin soporte */
+    }
+  }
+
+  function applyGhData(data) {
+    if (!ghStars) return;
+
+    if (data.private) {
+      ghStars.hidden = true;
+      if (ghStatus) ghStatus.hidden = true;
+      return;
+    }
+
     const ghCount = ghStars.querySelector('[data-gh-stars-count]');
-    fetch('https://api.github.com/repos/jeironpro/pulsar')
+    if (ghCount && typeof data.stars === 'number') {
+      ghCount.textContent =
+        data.stars >= 1000
+          ? `${(data.stars / 1000).toFixed(1).replace(/\.0$/, '')}k`
+          : String(data.stars);
+      ghStars.hidden = false;
+    }
+
+    if (ghStatus) {
+      ghStatus.hidden = !data.archived;
+      ghStatus.textContent = data.archived ? ' · Archived' : '';
+    }
+  }
+
+  function fetchGhData() {
+    return fetch('https://api.github.com/repos/jeironpro/pulsar')
       .then((r) =>
         r.ok ? r.json() : Promise.reject(new Error(String(r.status))),
       )
       .then((repo) => {
-        const n = Number(repo.stargazers_count);
-        if (!Number.isFinite(n)) return;
-        ghCount.textContent =
-          n >= 1000
-            ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
-            : String(n);
-        ghStars.hidden = false;
+        const data = {
+          stars: Number(repo.stargazers_count) || 0,
+          archived: !!repo.archived,
+          private: !!repo.private,
+        };
+        writeGhCache(data);
+        applyGhData(data);
+        return data;
       })
-      .catch(() => {
-        /* sin estrellas (red/rate-limit): el boton queda como esta */
-      });
+      .catch(() => null);
   }
+
+  // Caché: mostrar de inmediato, refrescar en segundo plano si stale
+  const ghCached = readGhCache();
+  if (ghCached) applyGhData(ghCached);
+  fetchGhData(); // silent fetch (actualiza cache y UI si hay datos nuevos)
 
   /* ============ Parallax (GSAP ScrollTrigger + mouse, carga on-demand) ============ */
   const heroLayers = $$('.hero [data-depth]');
