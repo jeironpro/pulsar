@@ -303,7 +303,7 @@ def dump_value(value: Any) -> str:
         return " | ".join(dump_value(v) for v in value)
     if isinstance(value, bool):
         return "true" if value else "false"
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return str(value)
     s = str(value)
     if "\n" in s:
