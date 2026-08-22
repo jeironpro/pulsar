@@ -10,6 +10,7 @@
   --surface-strong: #10142a;
   --line: rgba(163, 170, 255, 0.14);
   --line-strong: rgba(163, 170, 255, 0.28);
+  --thumb: #5f6499; /* >= 3:1 sobre todos los fondos (WCAG 1.4.11) */
 
   --text-hi: #eef0ff;
   --text-mid: #a9aecf;
@@ -109,7 +110,7 @@ canvas {
 /* ============ Scrollbars acordes al tema ============ */
 * {
   scrollbar-width: thin; /* Firefox */
-  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-color: var(--thumb) transparent;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -119,7 +120,7 @@ canvas {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
+  background: var(--thumb);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -1237,7 +1238,7 @@ canvas {
 }
 .casos-swiper .swiper-pagination-bullet {
   background: var(--text-low);
-  opacity: 0.5;
+  opacity: 1; /* 0.2 del swiper base romperia el 3:1 (WCAG 1.4.11) */
   margin: 0 !important;
   transition: all 0.25s;
 }
