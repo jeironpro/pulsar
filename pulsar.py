@@ -130,7 +130,8 @@ class ValueNode:
     def _parse(self) -> Any:
         val = self.raw.strip()
 
-        if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
+        if (len(val) >= 2 and val[0] == '"' and val[-1] == '"'
+                and '"' not in val[1:-1]):
             self.kind = 'string'
             return val[1:-1]
 
@@ -247,6 +248,25 @@ def build_document(ast: List[BlockNode]) -> List[Dict[str, Any]]:
 # ----------------------------
 # Serializer
 # ----------------------------
+def _needs_quotes(s: str) -> bool:
+    if s == '' or s != s.strip():
+        return True
+    if s.lower() in ('true', 'false'):
+        return True
+    for ch in ('|', '{', '}', '::'):
+        if ch in s:
+            return True
+    try:
+        if '.' in s:
+            float(s)
+        elif len(s) > 1 and s[0] == '0':
+            return False
+        else:
+            int(s)
+        return True
+    except ValueError:
+        return False
+
 def dump_value(value: Any) -> str:
     if isinstance(value, dict):
         items = ' | '.join(f'{k} >> {dump_value(v)}' for k, v in value.items())
@@ -255,9 +275,13 @@ def dump_value(value: Any) -> str:
         return ' | '.join(dump_value(v) for v in value)
     if isinstance(value, bool):
         return 'true' if value else 'false'
+    if isinstance(value, (int, float)):
+        return str(value)
     s = str(value)
     if '\n' in s:
         return '<<\n' + s + '\n>>'
+    if _needs_quotes(s):
+        return '"' + s.replace('"', "'") + '"'
     return s
 
 def serialize_block(block: Dict[str, Any], indent: int = 0) -> str:

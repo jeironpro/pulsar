@@ -7,7 +7,7 @@ from pulsar import (
     lex_psr, parse, build_document, build_block, dump_psr,
     dump_value, serialize_block, validate_psr, resolve_value,
     ValueNode, BlockNode, AttributeNode, PSRLexError, PSRParseError,
-    _comment_end, _type_matches, _expand_psr_schema
+    _comment_end, _type_matches, _expand_psr_schema, _needs_quotes
 )
 
 
@@ -307,6 +307,89 @@ class TestSerializer(unittest.TestCase):
         ast2 = parse(lex_psr(text))
         data2 = build_document(ast2)
         self.assertEqual(data, data2)
+
+    def _round_trip(self, source: str):
+        data = build_document(parse(lex_psr(source)))
+        text = dump_psr(data)
+        return data, build_document(parse(lex_psr(text)))
+
+    def test_round_trip_numeric_string(self):
+        original = '-> x\n    a >> "42"\n    b >> "3.14"\n    c >> "-7"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['a'], '42')
+        self.assertEqual(data[0]['atributos']['b'], '3.14')
+        self.assertEqual(data[0]['atributos']['c'], '-7')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_bool_string(self):
+        original = '-> x\n    a >> "true"\n    b >> "False"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['a'], 'true')
+        self.assertEqual(data[0]['atributos']['b'], 'False')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_pipe_in_string(self):
+        original = '-> x\n    cmd >> "a | b | c"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['cmd'], 'a | b | c')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_braces_in_string(self):
+        original = '-> x\n    tpl >> "{ x >> 1 }"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['tpl'], '{ x >> 1 }')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_comment_marker_string(self):
+        original = '-> x\n    note >> "hola :: mundo"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['note'], 'hola :: mundo')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_empty_and_whitespace_strings(self):
+        original = '-> x\n    a >> ""\n    b >> "  padded  "\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['a'], '')
+        self.assertEqual(data[0]['atributos']['b'], '  padded  ')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_leading_zero_string(self):
+        original = '-> x\n    code >> 007\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['code'], '007')
+        self.assertEqual(data, data2)
+
+    def test_round_trip_list_with_ambiguous_items(self):
+        original = '-> x\n    items >> "1" | two | "true"\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['items'], ['1', 'two', 'true'])
+        self.assertEqual(data, data2)
+
+    def test_round_trip_object_with_ambiguous_values(self):
+        original = '-> x\n    m >> { n >> "42" | ok >> "false" }\n<-\n'
+        data, data2 = self._round_trip(original)
+        self.assertEqual(data[0]['atributos']['m'], {'n': '42', 'ok': 'false'})
+        self.assertEqual(data, data2)
+
+    def test_needs_quotes_cases(self):
+        self.assertTrue(_needs_quotes(''))
+        self.assertTrue(_needs_quotes(' pad '))
+        self.assertTrue(_needs_quotes('42'))
+        self.assertTrue(_needs_quotes('-3.5'))
+        self.assertTrue(_needs_quotes('True'))
+        self.assertTrue(_needs_quotes('a|b'))
+        self.assertTrue(_needs_quotes('{ x }'))
+        self.assertTrue(_needs_quotes('a :: b'))
+        self.assertFalse(_needs_quotes('hello world'))
+        self.assertFalse(_needs_quotes('007'))
+        self.assertFalse(_needs_quotes('v1.0'))
+
+    def test_dump_value_preserves_types(self):
+        self.assertEqual(dump_value(42), '42')
+        self.assertEqual(dump_value(3.14), '3.14')
+        self.assertEqual(dump_value(True), 'true')
+        self.assertEqual(dump_value('plain'), 'plain')
+        self.assertEqual(dump_value('42'), '"42"')
 
 
 class TestValidator(unittest.TestCase):
