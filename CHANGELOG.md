@@ -5,9 +5,9 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y el versionado sigue [SemVer](https://semver.org/lang/spec/v2.0.0.html).
 
-## [Sin publicar]
+## [2.0.0] - 2026-08-22
 
-### Modificado — **BREAKING** (será `2.0.0`)
+### Modificado — **BREAKING**
 
 - Contrato de datos en inglés: `tipo/atributos/hijos` → `type/attributes/children`
 - Validador: los hijos se emparejan por `type` en lugar de por posición; se exige al menos uno por tipo declarado y se rechazan tipos de hijo no declarados
@@ -35,4 +35,5 @@ y el versionado sigue [SemVer](https://semver.org/lang/spec/v2.0.0.html).
 - Validador: reporta hijos faltantes según el schema y añade modo estricto opt-in contra atributos no declarados
 - Playground: ejemplo *Contacts* tenía un bloque sin cerrar; módulo compartido `PSRHl` omitido por `.gitignore` (`lib/`) nunca llegaba a producción
 
+[2.0.0]: https://github.com/jeironpro/pulsar/releases/tag/v2.0.0
 [1.0.0]: https://github.com/jeironpro/pulsar/releases/tag/v1.0.0
