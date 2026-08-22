@@ -41,16 +41,10 @@ def lex_psr(text: str) -> List[dict]:
 
     for lineno, line in enumerate(lines, start=1):
         raw = line
-        stripped = line.strip()
 
-        cpos = _comment_end(stripped)
-        if cpos >= 0:
-            stripped = stripped[:cpos].strip()
-        if not stripped:
-            continue
-
-        # multiline mode
+        # multiline mode: consume raw lines verbatim (preserva vacias y '::')
         if in_multiline:
+            stripped = line.strip()
             if stripped == '>>':
                 in_multiline = False
                 content = '\n'.join(multiline_content)
@@ -58,6 +52,14 @@ def lex_psr(text: str) -> List[dict]:
                                'value': content, 'line': multiline_start, 'column': 0})
             else:
                 multiline_content.append(raw)
+            continue
+
+        stripped = line.strip()
+
+        cpos = _comment_end(stripped)
+        if cpos >= 0:
+            stripped = stripped[:cpos].strip()
+        if not stripped:
             continue
 
         if stripped.startswith('->'):

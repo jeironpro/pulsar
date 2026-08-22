@@ -67,6 +67,24 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(attr['value'], 'line1\nline2')
         self.assertEqual(attr['key'], 'bio')
 
+    def test_multiline_preserves_blank_lines(self):
+        tokens = lex_psr('-> x\n    bio >> <<\nline1\n\nline3\n>>\n<-\n')
+        attr = [t for t in tokens if t['type'] == 'ATTRIBUTE'][0]
+        self.assertEqual(attr['value'], 'line1\n\nline3')
+
+    def test_multiline_preserves_comment_markers(self):
+        tokens = lex_psr('-> x\n    bio >> <<\nnota :: comentario\n>>\n<-\n')
+        attr = [t for t in tokens if t['type'] == 'ATTRIBUTE'][0]
+        self.assertEqual(attr['value'], 'nota :: comentario')
+
+    def test_round_trip_multiline_blank_lines(self):
+        original = '-> x\n    bio >> <<\nline1\n\nline3\n>>\n<-\n'
+        data = build_document(parse(lex_psr(original)))
+        self.assertEqual(data[0]['atributos']['bio'], 'line1\n\nline3')
+        text = dump_psr(data)
+        data2 = build_document(parse(lex_psr(text)))
+        self.assertEqual(data, data2)
+
     def test_error_empty_block_name(self):
         with self.assertRaises(PSRLexError):
             lex_psr('-> \n<-\n')
